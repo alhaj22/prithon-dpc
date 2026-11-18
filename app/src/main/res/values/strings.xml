@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Prithon Device Guard</string>
+    <string name="device_locked_title">DEVICE LOCKED</string>
+    <string name="device_locked_desc">Aapki EMI payment overdue hai. Kripya nicha diye gaye QR code se turant payment karein taaki phone unlock ho sake.</string>
+    <string name="emergency_call_btn">EMERGENCY (112)</string>
+    <string name="support_call_btn">FINANCIER HELPLINE</string>
+    <string name="unlock_pin_hint">Enter 6-digit Unlock PIN</string>
+    <string name="unlock_btn">UNLOCK DEVICE</string>
+</resources>

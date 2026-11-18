@@ -1,0 +1,29 @@
+R_DEF: Internal format may change without notice
+local
+color bg_dark
+color black
+color blue_primary
+color card_dark
+color green_success
+color red_alert
+color text_muted
+color white
+id btnEmergency
+id btnSupport
+id btnTestLock
+id btnUnlock
+id etUnlockPin
+id tvDeviceId
+id tvServerEndpoint
+id tvStatus
+layout activity_lock
+layout activity_main
+string app_name
+string device_locked_desc
+string device_locked_title
+string emergency_call_btn
+string support_call_btn
+string unlock_btn
+string unlock_pin_hint
+style Theme.PrithonDpc
+xml device_admin_receiver

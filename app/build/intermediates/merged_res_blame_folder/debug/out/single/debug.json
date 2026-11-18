@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.prithon.dpc.app-merged_res-31:/layout_activity_lock.xml.flat",
+        "source": "com.prithon.dpc.app-main-33:/layout/activity_lock.xml"
+    },
+    {
+        "merged": "com.prithon.dpc.app-merged_res-31:/xml_device_admin_receiver.xml.flat",
+        "source": "com.prithon.dpc.app-main-33:/xml/device_admin_receiver.xml"
+    },
+    {
+        "merged": "com.prithon.dpc.app-merged_res-31:/layout_activity_main.xml.flat",
+        "source": "com.prithon.dpc.app-main-33:/layout/activity_main.xml"
+    }
+]

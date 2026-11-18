@@ -1,0 +1,236 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.prithon.dpc"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:5:5-67
+11-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:5:22-64
+12    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+12-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:6:5-79
+12-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:6:22-76
+13    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+13-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:7:5-81
+13-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:7:22-78
+14    <uses-permission android:name="android.permission.CALL_PHONE" />
+14-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:8:5-69
+14-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:8:22-66
+15    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+15-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:9:5-77
+15-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:9:22-74
+16    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+16-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:10:5-89
+16-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:10:22-86
+17    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+17-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:11:5-77
+17-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:11:22-74
+18
+19    <permission
+19-->[androidx.core:core:1.12.0] /Users/alhaj/.gradle/caches/transforms-3/d1e4a685b1001794fbcfe4ee9c157a7e/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+20        android:name="com.prithon.dpc.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+20-->[androidx.core:core:1.12.0] /Users/alhaj/.gradle/caches/transforms-3/d1e4a685b1001794fbcfe4ee9c157a7e/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+21        android:protectionLevel="signature" />
+21-->[androidx.core:core:1.12.0] /Users/alhaj/.gradle/caches/transforms-3/d1e4a685b1001794fbcfe4ee9c157a7e/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
+22
+23    <uses-permission android:name="com.prithon.dpc.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+23-->[androidx.core:core:1.12.0] /Users/alhaj/.gradle/caches/transforms-3/d1e4a685b1001794fbcfe4ee9c157a7e/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+23-->[androidx.core:core:1.12.0] /Users/alhaj/.gradle/caches/transforms-3/d1e4a685b1001794fbcfe4ee9c157a7e/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+24
+25    <application
+25-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:13:5-79:19
+26        android:allowBackup="false"
+26-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:14:9-36
+27        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+27-->[androidx.core:core:1.12.0] /Users/alhaj/.gradle/caches/transforms-3/d1e4a685b1001794fbcfe4ee9c157a7e/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+28        android:debuggable="true"
+29        android:extractNativeLibs="false"
+30        android:icon="@android:drawable/ic_lock_lock"
+30-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:15:9-54
+31        android:label="@string/app_name"
+31-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:16:9-41
+32        android:roundIcon="@android:drawable/ic_lock_lock"
+32-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:17:9-59
+33        android:supportsRtl="true"
+33-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:18:9-35
+34        android:theme="@style/Theme.PrithonDpc" >
+34-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:19:9-48
+35
+36        <!-- 1. Master Android Enterprise Device Admin Receiver -->
+37        <receiver
+37-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:23:9-35:20
+38            android:name="com.prithon.dpc.receivers.PrithonAdminReceiver"
+38-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:24:13-59
+39            android:exported="true"
+39-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:26:13-36
+40            android:permission="android.permission.BIND_DEVICE_ADMIN" >
+40-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:25:13-70
+41            <meta-data
+41-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:27:13-29:65
+42                android:name="android.app.device_admin"
+42-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:28:17-56
+43                android:resource="@xml/device_admin_receiver" />
+43-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:29:17-62
+44
+45            <intent-filter>
+45-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:30:13-34:29
+46                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+46-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:31:17-82
+46-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:31:25-79
+47                <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
+47-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:32:17-91
+47-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:32:25-88
+48                <action android:name="android.intent.action.BOOT_COMPLETED" />
+48-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:33:17-79
+48-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:33:25-76
+49            </intent-filter>
+50        </receiver>
+51
+52        <!-- 2. Boot Completed Receiver to restore background service on reboot -->
+53        <receiver
+53-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:38:9-45:20
+54            android:name="com.prithon.dpc.receivers.BootCompletedReceiver"
+54-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:39:13-60
+55            android:exported="true" >
+55-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:40:13-36
+56            <intent-filter>
+56-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:41:13-44:29
+57                <action android:name="android.intent.action.BOOT_COMPLETED" />
+57-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:33:17-79
+57-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:33:25-76
+58                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+58-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:43:17-82
+58-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:43:25-79
+59            </intent-filter>
+60        </receiver>
+61
+62        <!-- 3. Setup & Status Activity -->
+63        <activity
+63-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:48:9-55:20
+64            android:name="com.prithon.dpc.ui.MainActivity"
+64-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:49:13-44
+65            android:exported="true" >
+65-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:50:13-36
+66            <intent-filter>
+66-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:51:13-54:29
+67                <action android:name="android.intent.action.MAIN" />
+67-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:52:17-69
+67-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:52:25-66
+68
+69                <category android:name="android.intent.category.LAUNCHER" />
+69-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:53:17-77
+69-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:53:27-74
+70            </intent-filter>
+71        </activity>
+72
+73        <!-- 4. Strict Single-App Kiosk Lock Activity -->
+74        <activity
+74-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:58:9-66:40
+75            android:name="com.prithon.dpc.ui.LockActivity"
+75-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:59:13-44
+76            android:excludeFromRecents="true"
+76-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:65:13-46
+77            android:exported="false"
+77-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:66:13-37
+78            android:launchMode="singleTask"
+78-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:60:13-44
+79            android:screenOrientation="portrait"
+79-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:61:13-49
+80            android:showOnLockScreen="true"
+80-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:62:13-44
+81            android:showWhenLocked="true"
+81-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:63:13-42
+82            android:turnScreenOn="true" />
+82-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:64:13-40
+83
+84        <!-- 5. High-Priority Persistent MDM Service -->
+85        <service
+85-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:69:9-77:19
+86            android:name="com.prithon.dpc.services.MdmForegroundService"
+86-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:70:13-58
+87            android:enabled="true"
+87-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:71:13-35
+88            android:exported="false"
+88-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:72:13-37
+89            android:foregroundServiceType="specialUse" >
+89-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:73:13-55
+90            <property
+90-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:74:13-76:97
+91                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+91-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:75:17-76
+92                android:value="Enterprise device management and finance lock synchronization" />
+92-->/Users/alhaj/Desktop/prithon-mdm-enterprise/android-dpc/app/src/main/AndroidManifest.xml:76:17-94
+93        </service>
+94
+95        <provider
+95-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+96            android:name="androidx.startup.InitializationProvider"
+96-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:25:13-67
+97            android:authorities="com.prithon.dpc.androidx-startup"
+97-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:26:13-68
+98            android:exported="false" >
+98-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:27:13-37
+99            <meta-data
+99-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+100                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+100-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:30:17-75
+101                android:value="androidx.startup" />
+101-->[androidx.emoji2:emoji2:1.2.0] /Users/alhaj/.gradle/caches/transforms-3/9dba3473c2e7ab91e493b9371a42d8d3/transformed/emoji2-1.2.0/AndroidManifest.xml:31:17-49
+102            <meta-data
+102-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/alhaj/.gradle/caches/transforms-3/f96262b739e7235dd07a97d871a1b1da/transformed/lifecycle-process-2.6.1/AndroidManifest.xml:29:13-31:52
+103                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+103-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/alhaj/.gradle/caches/transforms-3/f96262b739e7235dd07a97d871a1b1da/transformed/lifecycle-process-2.6.1/AndroidManifest.xml:30:17-78
+104                android:value="androidx.startup" />
+104-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/alhaj/.gradle/caches/transforms-3/f96262b739e7235dd07a97d871a1b1da/transformed/lifecycle-process-2.6.1/AndroidManifest.xml:31:17-49
+105            <meta-data
+105-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+106                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+107                android:value="androidx.startup" />
+107-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+108        </provider>
+109
+110        <receiver
+110-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+111            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+111-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+112            android:directBootAware="false"
+112-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+113            android:enabled="true"
+113-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+114            android:exported="true"
+114-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+115            android:permission="android.permission.DUMP" >
+115-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+116            <intent-filter>
+116-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+117                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+117-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+117-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+118            </intent-filter>
+119            <intent-filter>
+119-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+120                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+120-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+120-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+121            </intent-filter>
+122            <intent-filter>
+122-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+123                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+123-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+123-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+124            </intent-filter>
+125            <intent-filter>
+125-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+126                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+126-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+126-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/alhaj/.gradle/caches/transforms-3/ee77c6148e535550acd02ec4a55fcb7f/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+127            </intent-filter>
+128        </receiver>
+129    </application>
+130
+131</manifest>
