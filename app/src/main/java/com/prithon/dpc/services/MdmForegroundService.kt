@@ -121,7 +121,11 @@ class MdmForegroundService : Service() {
                             notifyDeviceStatus("LOCKED")
                         }
                         "UNLOCK" -> {
-                            sendBroadcast(Intent(ACTION_REMOTE_UNLOCK))
+                            lockManager.unlockDevice()
+                            val unlockIntent = Intent(ACTION_REMOTE_UNLOCK).apply {
+                                setPackage(packageName)
+                            }
+                            sendBroadcast(unlockIntent)
                             notifyDeviceStatus("NORMAL")
                         }
                     }

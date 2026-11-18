@@ -61,24 +61,25 @@ class DeviceLockManager(private val context: Context) {
     /**
      * Releases device from Kiosk Lock back to normal state
      */
-    fun unlockDevice(lockActivity: Activity) {
+    fun unlockDevice(lockActivity: Activity? = null) {
         if (!isDeviceOwner()) {
-            lockActivity.finish()
+            lockActivity?.finish()
             return
         }
 
         try {
-            // 1. Release LockTask Mode
-            lockActivity.stopLockTask()
+            // 1. Release LockTask Mode by removing app from lock task packages
+            dpm.setLockTaskPackages(admin, arrayOf())
+            lockActivity?.stopLockTask()
 
             // 2. Re-enable status bar
             dpm.setStatusBarDisabled(admin, false)
 
-            lockActivity.finish()
+            lockActivity?.finish()
             Log.i(TAG, "Device successfully RELEASED to NORMAL mode.")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to release unlockDevice", e)
-            lockActivity.finish()
+            lockActivity?.finish()
         }
     }
 }

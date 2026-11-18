@@ -24,7 +24,13 @@ class LockActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == MdmForegroundService.ACTION_REMOTE_UNLOCK) {
                 Toast.makeText(this@LockActivity, "Device Unlocked by Server", Toast.LENGTH_SHORT).show()
+                try {
+                    stopLockTask()
+                } catch (e: Exception) {
+                    // Ignore
+                }
                 lockManager.unlockDevice(this@LockActivity)
+                finishAndRemoveTask()
             }
         }
     }
