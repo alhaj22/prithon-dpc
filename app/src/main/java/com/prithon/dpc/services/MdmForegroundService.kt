@@ -30,9 +30,9 @@ class MdmForegroundService : Service() {
         private const val CHANNEL_ID = "prithon_mdm_channel"
         private const val NOTIFICATION_ID = 1001
 
-        // Default Server Endpoint (Local Wi-Fi IP)
-        // In production, this points to your AWS / Cloudflare domain (e.g., https://mdm.prithontech.com)
-        const val DEFAULT_SERVER_URL = "http://192.168.43.174:4000"
+        // Current Mac Local Wi-Fi IP and USB Reverse Port
+        const val DEFAULT_SERVER_URL = "http://192.168.1.6:4000"
+        const val USB_LOCAL_SERVER_URL = "http://127.0.0.1:4000"
         const val ACTION_REMOTE_UNLOCK = "com.prithon.dpc.ACTION_REMOTE_UNLOCK"
     }
 
@@ -78,43 +78,61 @@ class MdmForegroundService : Service() {
                 timeout = 10000
             }
 
-            socket = IO.socket(DEFAULT_SERVER_URL, options)
+            // Prefer Wi-Fi IP, fallback to USB reverse port
+            val primaryUrl = DEFAULT_SERVER_URL
+            socket = IO.socket(primaryUrl, options)
 
-            socket?.on(Socket.EVENT_CONNECT) {
-                Log.i(TAG, "Successfully connected to Control Plane Gateway!")
-                sendRegistrationPayload()
-            }
-
-            socket?.on("server_command") { args ->
+            socket?.on(Socket.EVENT_CONNECT_ERROR) { err ->
+                val errorMsg = err.getOrNull(0)?.toString() ?: "unknown"
+                Log.w(TAG, "Connection error on $primaryUrl ($errorMsg), trying USB fallback...")
                 try {
-                    val data = args[0] as JSONObject
-                    val command = data.optString("command")
-                    Log.i(TAG, "Received Remote Command: $command")
-
-                    mainHandler.post {
-                        when (command) {
-                            "LOCK" -> {
-                                lockManager.lockDevice()
-                                notifyDeviceStatus("LOCKED")
-                            }
-                            "UNLOCK" -> {
-                                sendBroadcast(Intent(ACTION_REMOTE_UNLOCK))
-                                notifyDeviceStatus("NORMAL")
-                            }
-                        }
-                    }
+                    socket?.disconnect()
+                    socket = IO.socket(USB_LOCAL_SERVER_URL, options)
+                    setupSocketListeners()
+                    socket?.connect()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error handling remote command", e)
+                    Log.e(TAG, "USB fallback failed", e)
                 }
             }
 
-            socket?.on(Socket.EVENT_DISCONNECT) {
-                Log.w(TAG, "Socket disconnected. Will attempt auto-reconnect...")
-            }
-
+            setupSocketListeners()
             socket?.connect()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize socket connection", e)
+        }
+    }
+
+    private fun setupSocketListeners() {
+        socket?.on(Socket.EVENT_CONNECT) {
+            Log.i(TAG, "Successfully connected to Control Plane Gateway!")
+            sendRegistrationPayload()
+        }
+
+        socket?.on("server_command") { args ->
+            try {
+                val data = args[0] as JSONObject
+                val command = data.optString("command")
+                Log.i(TAG, "Received Remote Command: $command")
+
+                mainHandler.post {
+                    when (command) {
+                        "LOCK" -> {
+                            lockManager.lockDevice()
+                            notifyDeviceStatus("LOCKED")
+                        }
+                        "UNLOCK" -> {
+                            sendBroadcast(Intent(ACTION_REMOTE_UNLOCK))
+                            notifyDeviceStatus("NORMAL")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error handling remote command", e)
+            }
+        }
+
+        socket?.on(Socket.EVENT_DISCONNECT) {
+            Log.w(TAG, "Socket disconnected. Will attempt auto-reconnect...")
         }
     }
 
