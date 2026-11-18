@@ -56,6 +56,11 @@ class LockActivity : AppCompatActivity() {
             if (pin == OFFLINE_MASTER_PIN) {
                 Toast.makeText(this, "Master PIN Accepted. Unlocking...", Toast.LENGTH_SHORT).show()
                 lockManager.unlockDevice(this)
+                val intent = Intent(MdmForegroundService.ACTION_PIN_UNLOCKED).apply {
+                    setPackage(packageName)
+                }
+                sendBroadcast(intent)
+                finishAndRemoveTask()
             } else {
                 Toast.makeText(this, "Invalid PIN! Please contact your retailer.", Toast.LENGTH_SHORT).show()
             }

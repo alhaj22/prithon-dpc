@@ -4,8 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
@@ -25,15 +27,46 @@ class MdmForegroundService : Service() {
     private lateinit var lockManager: DeviceLockManager
     private val mainHandler = Handler(Looper.getMainLooper())
 
+    private val pinUnlockReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_PIN_UNLOCKED) {
+                Log.i(TAG, "PIN unlock detected on device. Updating server status to NORMAL...")
+                lockManager.unlockDevice()
+                notifyDeviceStatus("NORMAL")
+            }
+        }
+    }
+
+    private val heartbeatRunnable = object : Runnable {
+        override fun run() {
+            sendHeartbeat()
+            mainHandler.postDelayed(this, 10000)
+        }
+    }
+
     companion object {
         private const val TAG = "MdmForegroundService"
         private const val CHANNEL_ID = "prithon_mdm_channel"
         private const val NOTIFICATION_ID = 1001
 
-        // Current Mac Local Wi-Fi IP and USB Reverse Port
+        // Enterprise Multi-Gateway Endpoints (Cloud Public HTTPS + Local Wi-Fi + USB Reverse)
+        const val CLOUD_SERVER_URL = "https://moderator-amazing-dimensional-conference.trycloudflare.com"
         const val DEFAULT_SERVER_URL = "http://192.168.1.6:4000"
         const val USB_LOCAL_SERVER_URL = "http://127.0.0.1:4000"
         const val ACTION_REMOTE_UNLOCK = "com.prithon.dpc.ACTION_REMOTE_UNLOCK"
+        const val ACTION_PIN_UNLOCKED = "com.prithon.dpc.ACTION_PIN_UNLOCKED"
+    }
+
+    private val endpoints = listOf(
+        CLOUD_SERVER_URL,
+        DEFAULT_SERVER_URL,
+        USB_LOCAL_SERVER_URL
+    )
+    private var currentEndpointIndex = 0
+
+    private val reconnectRunnable = Runnable {
+        currentEndpointIndex = (currentEndpointIndex + 1) % endpoints.size
+        connectToControlPlane()
     }
 
     override fun onCreate() {
@@ -41,7 +74,16 @@ class MdmForegroundService : Service() {
         lockManager = DeviceLockManager(this)
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildForegroundNotification())
+
+        val filter = IntentFilter(ACTION_PIN_UNLOCKED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(pinUnlockReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(pinUnlockReceiver, filter)
+        }
+
         connectToControlPlane()
+        mainHandler.post(heartbeatRunnable)
     }
 
     private fun createNotificationChannel() {
@@ -70,74 +112,71 @@ class MdmForegroundService : Service() {
     }
 
     private fun connectToControlPlane() {
+        val targetUrl = endpoints[currentEndpointIndex]
+        Log.i(TAG, "Attempting connection to gateway: $targetUrl")
         try {
             val options = IO.Options().apply {
-                reconnection = true
-                reconnectionAttempts = Int.MAX_VALUE
-                reconnectionDelay = 2000
-                timeout = 10000
+                reconnection = false
+                timeout = 6000
             }
 
-            // Prefer Wi-Fi IP, fallback to USB reverse port
-            val primaryUrl = DEFAULT_SERVER_URL
-            socket = IO.socket(primaryUrl, options)
+            socket?.disconnect()
+            socket?.close()
+            socket = IO.socket(targetUrl, options)
+
+            socket?.on(Socket.EVENT_CONNECT) {
+                Log.i(TAG, "Successfully connected to Control Plane Gateway: $targetUrl")
+                sendRegistrationPayload()
+            }
 
             socket?.on(Socket.EVENT_CONNECT_ERROR) { err ->
                 val errorMsg = err.getOrNull(0)?.toString() ?: "unknown"
-                Log.w(TAG, "Connection error on $primaryUrl ($errorMsg), trying USB fallback...")
+                Log.w(TAG, "Connection error on $targetUrl ($errorMsg), rotating to next gateway...")
+                rotateEndpointAndRetry()
+            }
+
+            socket?.on(Socket.EVENT_DISCONNECT) {
+                Log.w(TAG, "Socket disconnected from $targetUrl. Rotating gateway...")
+                rotateEndpointAndRetry()
+            }
+
+            socket?.on("server_command") { args ->
                 try {
-                    socket?.disconnect()
-                    socket = IO.socket(USB_LOCAL_SERVER_URL, options)
-                    setupSocketListeners()
-                    socket?.connect()
+                    val data = args[0] as JSONObject
+                    val command = data.optString("command")
+                    Log.i(TAG, "Received Remote Command: $command")
+
+                    mainHandler.post {
+                        when (command) {
+                            "LOCK" -> {
+                                lockManager.lockDevice()
+                                notifyDeviceStatus("LOCKED")
+                            }
+                            "UNLOCK" -> {
+                                lockManager.unlockDevice()
+                                val unlockIntent = Intent(ACTION_REMOTE_UNLOCK).apply {
+                                    setPackage(packageName)
+                                }
+                                sendBroadcast(unlockIntent)
+                                notifyDeviceStatus("NORMAL")
+                            }
+                        }
+                    }
                 } catch (e: Exception) {
-                    Log.e(TAG, "USB fallback failed", e)
+                    Log.e(TAG, "Error handling remote command", e)
                 }
             }
 
-            setupSocketListeners()
             socket?.connect()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize socket connection", e)
+            Log.e(TAG, "Failed to initialize socket for $targetUrl", e)
+            rotateEndpointAndRetry()
         }
     }
 
-    private fun setupSocketListeners() {
-        socket?.on(Socket.EVENT_CONNECT) {
-            Log.i(TAG, "Successfully connected to Control Plane Gateway!")
-            sendRegistrationPayload()
-        }
-
-        socket?.on("server_command") { args ->
-            try {
-                val data = args[0] as JSONObject
-                val command = data.optString("command")
-                Log.i(TAG, "Received Remote Command: $command")
-
-                mainHandler.post {
-                    when (command) {
-                        "LOCK" -> {
-                            lockManager.lockDevice()
-                            notifyDeviceStatus("LOCKED")
-                        }
-                        "UNLOCK" -> {
-                            lockManager.unlockDevice()
-                            val unlockIntent = Intent(ACTION_REMOTE_UNLOCK).apply {
-                                setPackage(packageName)
-                            }
-                            sendBroadcast(unlockIntent)
-                            notifyDeviceStatus("NORMAL")
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error handling remote command", e)
-            }
-        }
-
-        socket?.on(Socket.EVENT_DISCONNECT) {
-            Log.w(TAG, "Socket disconnected. Will attempt auto-reconnect...")
-        }
+    private fun rotateEndpointAndRetry() {
+        mainHandler.removeCallbacks(reconnectRunnable)
+        mainHandler.postDelayed(reconnectRunnable, 3000)
     }
 
     private fun sendRegistrationPayload() {
@@ -167,12 +206,34 @@ class MdmForegroundService : Service() {
         socket?.emit("device_status_changed", payload)
     }
 
+    private fun sendHeartbeat() {
+        try {
+            val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+            val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            val batteryPct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            val payload = JSONObject().apply {
+                put("deviceId", deviceId)
+                put("battery", batteryPct)
+            }
+            socket?.emit("heartbeat", payload)
+        } catch (e: Exception) {
+            // Suppress heartbeat errors
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        mainHandler.removeCallbacks(heartbeatRunnable)
+        mainHandler.removeCallbacks(reconnectRunnable)
+        try {
+            unregisterReceiver(pinUnlockReceiver)
+        } catch (e: Exception) {
+            // Ignore
+        }
         socket?.disconnect()
         socket?.close()
     }
