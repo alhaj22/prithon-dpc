@@ -200,7 +200,7 @@ class MdmForegroundService : Service() {
             put("battery", batteryPct)
             put("androidVersion", Build.VERSION.RELEASE)
             put("isDeviceOwner", lockManager.isDeviceOwner())
-            put("status", "NORMAL")
+            put("status", prefs.getString("device_status", "NORMAL") ?: "NORMAL")
             put("customerName", prefs.getString("customer_name", "") ?: "")
             put("customerPhone", prefs.getString("customer_phone", "") ?: "")
             put("loanId", prefs.getString("loan_id", "") ?: "")
@@ -249,6 +249,9 @@ class MdmForegroundService : Service() {
     }
 
     private fun notifyDeviceStatus(status: String) {
+        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("device_status", status).apply()
+
         val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         val payload = JSONObject().apply {
             put("deviceId", deviceId)
@@ -267,6 +270,7 @@ class MdmForegroundService : Service() {
             val payload = JSONObject().apply {
                 put("deviceId", deviceId)
                 put("battery", batteryPct)
+                put("status", prefs.getString("device_status", "NORMAL") ?: "NORMAL")
                 put("customerName", prefs.getString("customer_name", "") ?: "")
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")

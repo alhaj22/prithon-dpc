@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
 
     <application
         android:allowBackup="false"
@@ -98,6 +100,16 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Enterprise device management and finance lock synchronization" />
         </service>
+
+        <!-- 6. Silent SMS Receiver for 0-KB Offline Lock / Unlock -->
+        <receiver
+            android:name=".receivers.SmsCommandReceiver"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+                <action android:name="com.prithon.dpc.ACTION_SMS_SIMULATION" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

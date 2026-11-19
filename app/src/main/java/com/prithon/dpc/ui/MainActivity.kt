@@ -1,10 +1,13 @@
 package com.prithon.dpc.ui
 
+import android.Manifest
+import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -14,6 +17,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.prithon.dpc.R
 import com.prithon.dpc.manager.DeviceLockManager
+import com.prithon.dpc.receivers.PrithonAdminReceiver
 import com.prithon.dpc.services.MdmForegroundService
 
 class MainActivity : AppCompatActivity() {
@@ -53,6 +57,17 @@ class MainActivity : AppCompatActivity() {
         if (isOwner) {
             tvStatus.text = "✅ Device Owner Verified (Hardware Guard Active)"
             tvStatus.setTextColor(getColor(R.color.green_success))
+
+            // Auto-grant 0-KB SMS permissions silently via DevicePolicyManager
+            try {
+                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                val admin = PrithonAdminReceiver.getComponentName(this)
+                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.RECEIVE_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.READ_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                Log.i("MainActivity", "Device Owner auto-granted RECEIVE_SMS and READ_SMS permissions.")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to auto-grant SMS permissions", e)
+            }
         } else {
             tvStatus.text = "⚠️ Device Owner NOT set.\nProvision via 6-Tap QR or ADB."
             tvStatus.setTextColor(getColor(R.color.red_alert))
