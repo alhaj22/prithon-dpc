@@ -49,9 +49,9 @@ class MdmForegroundService : Service() {
         private const val CHANNEL_ID = "prithon_mdm_channel"
         private const val NOTIFICATION_ID = 1001
 
-        // Enterprise Multi-Gateway Endpoints (Cloud Public HTTPS + Local Wi-Fi + USB Reverse)
-        const val CLOUD_SERVER_URL = "https://moderator-amazing-dimensional-conference.trycloudflare.com"
-        const val DEFAULT_SERVER_URL = "http://192.168.1.6:4000"
+        // Enterprise Multi-Gateway Endpoints (Cloud Public HTTPS + Local Fallbacks)
+        const val CLOUD_SERVER_URL = "https://prithon-mdm-backend.onrender.com"
+        const val DEFAULT_SERVER_URL = "https://prithon-mdm-backend.onrender.com"
         const val USB_LOCAL_SERVER_URL = "http://127.0.0.1:4000"
         const val ACTION_REMOTE_UNLOCK = "com.prithon.dpc.ACTION_REMOTE_UNLOCK"
         const val ACTION_PIN_UNLOCKED = "com.prithon.dpc.ACTION_PIN_UNLOCKED"
