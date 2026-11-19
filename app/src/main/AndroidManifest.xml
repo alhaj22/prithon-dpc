@@ -55,6 +55,27 @@
             </intent-filter>
         </activity>
 
+        <!-- 3b. Android 12+ Enterprise 6-Tap QR Provisioning Handlers -->
+        <activity
+            android:name=".ui.ProvisioningModeActivity"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.GET_PROVISIONING_MODE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.AdminPolicyComplianceActivity"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.ADMIN_POLICY_COMPLIANCE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- 4. Strict Single-App Kiosk Lock Activity -->
         <activity
             android:name=".ui.LockActivity"
