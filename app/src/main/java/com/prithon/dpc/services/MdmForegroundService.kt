@@ -55,6 +55,7 @@ class MdmForegroundService : Service() {
         const val USB_LOCAL_SERVER_URL = "http://127.0.0.1:4000"
         const val ACTION_REMOTE_UNLOCK = "com.prithon.dpc.ACTION_REMOTE_UNLOCK"
         const val ACTION_PIN_UNLOCKED = "com.prithon.dpc.ACTION_PIN_UNLOCKED"
+        const val ACTION_CUSTOMER_UPDATED = "com.prithon.dpc.ACTION_CUSTOMER_UPDATED"
     }
 
     private val endpoints = listOf(
@@ -184,6 +185,7 @@ class MdmForegroundService : Service() {
         val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val batteryPct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
+        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
         val reg = JSONObject().apply {
             put("deviceId", deviceId)
             put("brand", Build.BRAND)
@@ -192,9 +194,31 @@ class MdmForegroundService : Service() {
             put("androidVersion", Build.VERSION.RELEASE)
             put("isDeviceOwner", lockManager.isDeviceOwner())
             put("status", "NORMAL")
+            put("customerName", prefs.getString("customer_name", "") ?: "")
+            put("customerPhone", prefs.getString("customer_phone", "") ?: "")
+            put("loanId", prefs.getString("loan_id", "") ?: "")
+            put("emiAmount", prefs.getString("emi_amount", "") ?: "")
         }
         socket?.emit("register_device", reg)
         Log.i(TAG, "Registration payload emitted for device: $deviceId")
+    }
+
+    private fun sendCustomerUpdatePayload() {
+        try {
+            val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+            val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+            val payload = JSONObject().apply {
+                put("deviceId", deviceId)
+                put("customerName", prefs.getString("customer_name", "") ?: "")
+                put("customerPhone", prefs.getString("customer_phone", "") ?: "")
+                put("loanId", prefs.getString("loan_id", "") ?: "")
+                put("emiAmount", prefs.getString("emi_amount", "") ?: "")
+            }
+            socket?.emit("register_customer", payload)
+            Log.i(TAG, "Customer details emitted to server for device $deviceId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to emit customer update", e)
+        }
     }
 
     private fun notifyDeviceStatus(status: String) {
@@ -211,9 +235,15 @@ class MdmForegroundService : Service() {
             val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
             val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             val batteryPct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+
             val payload = JSONObject().apply {
                 put("deviceId", deviceId)
                 put("battery", batteryPct)
+                put("customerName", prefs.getString("customer_name", "") ?: "")
+                put("customerPhone", prefs.getString("customer_phone", "") ?: "")
+                put("loanId", prefs.getString("loan_id", "") ?: "")
+                put("emiAmount", prefs.getString("emi_amount", "") ?: "")
             }
             socket?.emit("heartbeat", payload)
         } catch (e: Exception) {
@@ -222,6 +252,9 @@ class MdmForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_CUSTOMER_UPDATED) {
+            sendCustomerUpdatePayload()
+        }
         return START_STICKY
     }
 
