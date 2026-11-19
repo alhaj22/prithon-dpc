@@ -17,6 +17,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.prithon.dpc.manager.DeviceLockManager
+import com.prithon.dpc.manager.AppInventoryManager
 import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
@@ -25,6 +26,7 @@ class MdmForegroundService : Service() {
 
     private var socket: Socket? = null
     private lateinit var lockManager: DeviceLockManager
+    private lateinit var appInventoryManager: AppInventoryManager
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val pinUnlockReceiver = object : BroadcastReceiver() {
@@ -73,6 +75,7 @@ class MdmForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         lockManager = DeviceLockManager(this)
+        appInventoryManager = AppInventoryManager(this)
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildForegroundNotification())
 
@@ -161,6 +164,10 @@ class MdmForegroundService : Service() {
                                 sendBroadcast(unlockIntent)
                                 notifyDeviceStatus("NORMAL")
                             }
+                            "GET_APPS", "REFRESH_APPS" -> {
+                                Log.i(TAG, "Server requested installed applications inventory.")
+                                sendAppInventoryPayload()
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -201,6 +208,26 @@ class MdmForegroundService : Service() {
         }
         socket?.emit("register_device", reg)
         Log.i(TAG, "Registration payload emitted for device: $deviceId")
+        sendAppInventoryPayload()
+    }
+
+    private fun sendAppInventoryPayload() {
+        Thread {
+            try {
+                val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                val appsArray = appInventoryManager.getInstalledAppsJson()
+                val payload = JSONObject().apply {
+                    put("deviceId", deviceId)
+                    put("apps", appsArray)
+                }
+                mainHandler.post {
+                    socket?.emit("apps_inventory", payload)
+                    Log.i(TAG, "Sent installed apps inventory (${appsArray.length()} apps) to control plane.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send apps inventory", e)
+            }
+        }.start()
     }
 
     private fun sendCustomerUpdatePayload() {
@@ -254,6 +281,7 @@ class MdmForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_CUSTOMER_UPDATED) {
             sendCustomerUpdatePayload()
+            sendAppInventoryPayload()
         }
         return START_STICKY
     }
