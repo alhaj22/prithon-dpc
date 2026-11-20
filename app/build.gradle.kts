@@ -18,6 +18,15 @@ android {
     }
 
     signingConfigs {
+        create("release") {
+            storeFile = file("prithon-release.jks")
+            storePassword = "prithonenterprise"
+            keyAlias = "prithonkey"
+            keyPassword = "prithonenterprise"
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
         named("debug") {
             enableV1Signing = true
             enableV2Signing = true
@@ -29,6 +38,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
