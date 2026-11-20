@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
         val tvStatus = findViewById<TextView>(R.id.tvStatus)
         val tvDeviceId = findViewById<TextView>(R.id.tvDeviceId)
         val tvServerEndpoint = findViewById<TextView>(R.id.tvServerEndpoint)
-        val btnTestLock = findViewById<Button>(R.id.btnTestLock)
 
         // Customer Onboarding UI Elements
         val cardCustomerSummary = findViewById<LinearLayout>(R.id.cardCustomerSummary)
@@ -69,8 +68,8 @@ class MainActivity : AppCompatActivity() {
                 Log.e("MainActivity", "Failed to auto-grant SMS permissions", e)
             }
         } else {
-            tvStatus.text = "⚠️ Device Owner NOT set.\nProvision via 6-Tap QR or ADB."
-            tvStatus.setTextColor(getColor(R.color.red_alert))
+            tvStatus.text = "🛡️ Standard Finance Guard Active (Dual-Mode Kiosk)"
+            tvStatus.setTextColor(getColor(R.color.blue_primary))
         }
 
         // Shared preferences for customer details
@@ -118,12 +117,13 @@ class MainActivity : AppCompatActivity() {
                 .putString("customer_phone", phone)
                 .putString("loan_id", loan)
                 .putString("emi_amount", emi)
+                .putString("device_status", "LOCKED")
                 .apply()
 
-            Toast.makeText(this, "Customer details registered! Syncing with Server...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Finance Guard Active! Device Locked. Remote unlock via Dashboard.", Toast.LENGTH_LONG).show()
             loadCustomerUI()
 
-            // Trigger sync to MDM Foreground Service
+            // 1. Trigger sync to MDM Foreground Service
             val syncIntent = Intent(this, MdmForegroundService::class.java).apply {
                 action = MdmForegroundService.ACTION_CUSTOMER_UPDATED
             }
@@ -132,6 +132,9 @@ class MainActivity : AppCompatActivity() {
             } else {
                 startService(syncIntent)
             }
+
+            // 2. Immediately execute Kiosk Lock
+            lockManager.lockDevice()
         }
 
         btnEditCustomer.setOnClickListener {
@@ -142,14 +145,6 @@ class MainActivity : AppCompatActivity() {
 
             cardCustomerSummary.visibility = View.GONE
             cardCustomerForm.visibility = View.VISIBLE
-        }
-
-        btnTestLock.setOnClickListener {
-            if (lockManager.isDeviceOwner()) {
-                lockManager.lockDevice()
-            } else {
-                Toast.makeText(this, "Cannot Lock: App must be Device Owner first!", Toast.LENGTH_LONG).show()
-            }
         }
 
         // Start Foreground Service

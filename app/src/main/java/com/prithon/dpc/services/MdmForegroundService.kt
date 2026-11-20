@@ -234,15 +234,18 @@ class MdmForegroundService : Service() {
         try {
             val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
             val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+            val status = prefs.getString("device_status", "NORMAL") ?: "NORMAL"
             val payload = JSONObject().apply {
                 put("deviceId", deviceId)
                 put("customerName", prefs.getString("customer_name", "") ?: "")
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")
                 put("emiAmount", prefs.getString("emi_amount", "") ?: "")
+                put("status", status)
             }
             socket?.emit("register_customer", payload)
-            Log.i(TAG, "Customer details emitted to server for device $deviceId")
+            notifyDeviceStatus(status)
+            Log.i(TAG, "Customer details emitted to server for device $deviceId with status $status")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to emit customer update", e)
         }

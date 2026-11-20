@@ -271,16 +271,5 @@
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
-        <!-- Local Test Lock Button -->
-        <Button
-            android:id="@+id/btnTestLock"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="TEST LOCAL KIOSK LOCK"
-            android:backgroundTint="@color/red_alert"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:textSize="13sp" />
-
     </LinearLayout>
 </ScrollView>
