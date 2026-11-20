@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -23,15 +24,24 @@ import com.prithon.dpc.services.MdmForegroundService
 class MainActivity : AppCompatActivity() {
 
     private lateinit var lockManager: DeviceLockManager
+    private lateinit var tvStatus: TextView
+    private lateinit var cardPermissions: LinearLayout
+    private lateinit var btnGrantAdmin: Button
+    private lateinit var btnGrantOverlay: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         lockManager = DeviceLockManager(this)
 
-        val tvStatus = findViewById<TextView>(R.id.tvStatus)
+        tvStatus = findViewById(R.id.tvStatus)
         val tvDeviceId = findViewById<TextView>(R.id.tvDeviceId)
         val tvServerEndpoint = findViewById<TextView>(R.id.tvServerEndpoint)
+
+        // Permission card elements
+        cardPermissions = findViewById(R.id.cardPermissions)
+        btnGrantAdmin = findViewById(R.id.btnGrantAdmin)
+        btnGrantOverlay = findViewById(R.id.btnGrantOverlay)
 
         // Customer Onboarding UI Elements
         val cardCustomerSummary = findViewById<LinearLayout>(R.id.cardCustomerSummary)
@@ -52,24 +62,27 @@ class MainActivity : AppCompatActivity() {
         tvDeviceId.text = "Device ID: $deviceId"
         tvServerEndpoint.text = "Server: ${MdmForegroundService.DEFAULT_SERVER_URL}"
 
-        val isOwner = lockManager.isDeviceOwner()
-        if (isOwner) {
-            tvStatus.text = "✅ Device Owner Verified (Hardware Guard Active)"
-            tvStatus.setTextColor(getColor(R.color.green_success))
-
-            // Auto-grant 0-KB SMS permissions silently via DevicePolicyManager
-            try {
-                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-                val admin = PrithonAdminReceiver.getComponentName(this)
-                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.RECEIVE_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
-                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.READ_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
-                Log.i("MainActivity", "Device Owner auto-granted RECEIVE_SMS and READ_SMS permissions.")
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to auto-grant SMS permissions", e)
+        // Permission Grant Buttons
+        btnGrantAdmin.setOnClickListener {
+            val admin = PrithonAdminReceiver.getComponentName(this)
+            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, admin)
+                putExtra(
+                    DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                    "Prithon Finance Guard requires Device Administrator permission to remotely lock and safeguard financed hardware."
+                )
             }
-        } else {
-            tvStatus.text = "🛡️ Standard Finance Guard Active (Dual-Mode Kiosk)"
-            tvStatus.setTextColor(getColor(R.color.blue_primary))
+            startActivity(intent)
+        }
+
+        btnGrantOverlay.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            }
         }
 
         // Shared preferences for customer details
@@ -153,6 +166,45 @@ class MainActivity : AppCompatActivity() {
             startForegroundService(serviceIntent)
         } else {
             startService(serviceIntent)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateSecurityStateUI()
+    }
+
+    private fun updateSecurityStateUI() {
+        val isOwner = lockManager.isDeviceOwner()
+        val isAdmin = lockManager.isDeviceAdmin()
+        val canOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Settings.canDrawOverlays(this) else true
+
+        if (isOwner) {
+            tvStatus.text = "✅ Device Owner Verified (Hardware Guard Active)"
+            tvStatus.setTextColor(getColor(R.color.green_success))
+            cardPermissions.visibility = View.GONE
+
+            // Auto-grant 0-KB SMS permissions silently via DevicePolicyManager
+            try {
+                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                val admin = PrithonAdminReceiver.getComponentName(this)
+                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.RECEIVE_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.READ_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                Log.i("MainActivity", "Device Owner auto-granted RECEIVE_SMS and READ_SMS permissions.")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to auto-grant SMS permissions", e)
+            }
+        } else if (isAdmin && canOverlay) {
+            tvStatus.text = "🛡️ Finance Guard Active (Device Admin + Overlay Armed)"
+            tvStatus.setTextColor(getColor(R.color.green_success))
+            cardPermissions.visibility = View.GONE
+        } else {
+            tvStatus.text = "⚠️ Setup Incomplete: Permissions Required for Remote Lock"
+            tvStatus.setTextColor(getColor(R.color.yellow_pending))
+            cardPermissions.visibility = View.VISIBLE
+
+            btnGrantAdmin.visibility = if (isAdmin) View.GONE else View.VISIBLE
+            btnGrantOverlay.visibility = if (canOverlay) View.GONE else View.VISIBLE
         }
     }
 }
