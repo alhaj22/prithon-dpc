@@ -26,6 +26,8 @@
         <!-- 1. Master Android Enterprise Device Admin Receiver -->
         <receiver
             android:name=".receivers.PrithonAdminReceiver"
+            android:description="@string/app_name"
+            android:label="@string/app_name"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
             <meta-data
@@ -35,6 +37,8 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.app.action.PROFILE_OWNER_CHANGED" />
+                <action android:name="android.app.action.DEVICE_OWNER_CHANGED" />
             </intent-filter>
         </receiver>
 
@@ -61,6 +65,7 @@
         <!-- 3b. Android 12+ Enterprise 6-Tap QR Provisioning Handlers -->
         <activity
             android:name=".ui.ProvisioningModeActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
             <intent-filter>
@@ -71,10 +76,21 @@
 
         <activity
             android:name=".ui.AdminPolicyComplianceActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.ADMIN_POLICY_COMPLIANCE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.ProvisioningSuccessActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.PROVISIONING_SUCCESSFUL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
