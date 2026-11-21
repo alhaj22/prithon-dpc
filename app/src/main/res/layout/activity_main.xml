@@ -139,6 +139,25 @@
                 android:layout_marginTop="4dp" />
 
             <TextView
+                android:id="@+id/tvSummaryShop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shop Code: APX-4021"
+                android:textColor="@color/cyan_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tvSummaryImei"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="IMEI: 860123456789012"
+                android:textColor="@color/text_muted"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
                 android:id="@+id/tvSummaryLoan"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -195,6 +214,29 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Field 0: Retailer / Shop Code -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shop / Retailer Code *"
+                android:textColor="@color/cyan_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etTenantCode"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="e.g. APX-4021"
+                android:textColorHint="#475569"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:background="#1E293B"
+                android:paddingHorizontal="14dp"
+                android:inputType="textCapCharacters"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="12dp" />
+
             <!-- Field 1: Customer Name -->
             <TextView
                 android:layout_width="wrap_content"
@@ -236,6 +278,29 @@
                 android:background="#1E293B"
                 android:paddingHorizontal="14dp"
                 android:inputType="phone"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Field: Device IMEI (15 Digits) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device IMEI Number (15 Digits) *"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etEnteredImei"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="e.g. 860123456789012"
+                android:textColorHint="#475569"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:background="#1E293B"
+                android:paddingHorizontal="14dp"
+                android:inputType="number"
+                android:maxLength="15"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="12dp" />
 

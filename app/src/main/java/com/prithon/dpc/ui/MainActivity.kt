@@ -1,6 +1,7 @@
 package com.prithon.dpc.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
@@ -8,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -46,14 +48,18 @@ class MainActivity : AppCompatActivity() {
         // Customer Onboarding UI Elements
         val cardCustomerSummary = findViewById<LinearLayout>(R.id.cardCustomerSummary)
         val cardCustomerForm = findViewById<LinearLayout>(R.id.cardCustomerForm)
+        val tvSummaryShop = findViewById<TextView>(R.id.tvSummaryShop)
         val tvSummaryName = findViewById<TextView>(R.id.tvSummaryName)
         val tvSummaryPhone = findViewById<TextView>(R.id.tvSummaryPhone)
+        val tvSummaryImei = findViewById<TextView>(R.id.tvSummaryImei)
         val tvSummaryLoan = findViewById<TextView>(R.id.tvSummaryLoan)
         val tvSummaryEmi = findViewById<TextView>(R.id.tvSummaryEmi)
         val btnEditCustomer = findViewById<Button>(R.id.btnEditCustomer)
 
+        val etTenantCode = findViewById<EditText>(R.id.etTenantCode)
         val etCustomerName = findViewById<EditText>(R.id.etCustomerName)
         val etCustomerPhone = findViewById<EditText>(R.id.etCustomerPhone)
+        val etEnteredImei = findViewById<EditText>(R.id.etEnteredImei)
         val etLoanId = findViewById<EditText>(R.id.etLoanId)
         val etEmiAmount = findViewById<EditText>(R.id.etEmiAmount)
         val btnSaveCustomer = findViewById<Button>(R.id.btnSaveCustomer)
@@ -85,12 +91,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Shared preferences for customer details
+        // Shared preferences for customer & tenant details
         val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
 
         fun loadCustomerUI() {
+            val tenantCode = prefs.getString("tenant_code", "") ?: ""
             val name = prefs.getString("customer_name", "") ?: ""
             val phone = prefs.getString("customer_phone", "") ?: ""
+            val imei = prefs.getString("entered_imei", "") ?: ""
             val loanId = prefs.getString("loan_id", "") ?: ""
             val emi = prefs.getString("emi_amount", "") ?: ""
 
@@ -98,8 +106,10 @@ class MainActivity : AppCompatActivity() {
                 cardCustomerSummary.visibility = View.VISIBLE
                 cardCustomerForm.visibility = View.GONE
 
+                tvSummaryShop.text = if (tenantCode.isNotEmpty()) "Shop Code: $tenantCode" else "Shop Code: Unassigned"
                 tvSummaryName.text = "Customer: $name"
                 tvSummaryPhone.text = "Phone: $phone"
+                tvSummaryImei.text = if (imei.isNotEmpty()) "IMEI: $imei" else "IMEI: Hardware Bound"
                 tvSummaryLoan.text = if (loanId.isNotEmpty()) "Loan ID: $loanId" else "Loan ID: Standard Finance"
                 tvSummaryEmi.text = if (emi.isNotEmpty()) "Monthly EMI: ₹$emi" else "Monthly EMI: N/A"
             } else {
@@ -111,11 +121,17 @@ class MainActivity : AppCompatActivity() {
         loadCustomerUI()
 
         btnSaveCustomer.setOnClickListener {
+            val tenantCode = etTenantCode.text.toString().trim().uppercase()
             val name = etCustomerName.text.toString().trim()
             val phone = etCustomerPhone.text.toString().trim()
+            val enteredImei = etEnteredImei.text.toString().trim()
             val loan = etLoanId.text.toString().trim()
             val emi = etEmiAmount.text.toString().trim()
 
+            if (tenantCode.isEmpty()) {
+                etTenantCode.error = "Shop Code is required (e.g. APX-4021)"
+                return@setOnClickListener
+            }
             if (name.isEmpty()) {
                 etCustomerName.error = "Customer Name is required"
                 return@setOnClickListener
@@ -124,16 +140,25 @@ class MainActivity : AppCompatActivity() {
                 etCustomerPhone.error = "Phone Number is required"
                 return@setOnClickListener
             }
+            if (enteredImei.length != 15) {
+                etEnteredImei.error = "Valid 15-digit IMEI is required"
+                return@setOnClickListener
+            }
+
+            val hardwareImei = getHardwareIdentifier()
 
             prefs.edit()
+                .putString("tenant_code", tenantCode)
                 .putString("customer_name", name)
                 .putString("customer_phone", phone)
+                .putString("entered_imei", enteredImei)
+                .putString("hardware_imei", hardwareImei)
                 .putString("loan_id", loan)
                 .putString("emi_amount", emi)
                 .putString("device_status", "LOCKED")
                 .apply()
 
-            Toast.makeText(this, "Finance Guard Active! Device Locked. Remote unlock via Dashboard.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Protection Active! Device bound to $tenantCode and locked.", Toast.LENGTH_LONG).show()
             loadCustomerUI()
 
             // 1. Trigger sync to MDM Foreground Service
@@ -151,8 +176,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnEditCustomer.setOnClickListener {
+            etTenantCode.setText(prefs.getString("tenant_code", ""))
             etCustomerName.setText(prefs.getString("customer_name", ""))
             etCustomerPhone.setText(prefs.getString("customer_phone", ""))
+            etEnteredImei.setText(prefs.getString("entered_imei", ""))
             etLoanId.setText(prefs.getString("loan_id", ""))
             etEmiAmount.setText(prefs.getString("emi_amount", ""))
 
@@ -167,6 +194,30 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService(serviceIntent)
         }
+    }
+
+    @SuppressLint("HardwareIds")
+    private fun getHardwareIdentifier(): String {
+        try {
+            val tm = getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+            if (tm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val imei = tm.imei
+                if (!imei.isNullOrEmpty()) return imei
+            }
+        } catch (e: Exception) {
+            // Android 10+ restricts non-DO access to IMEI
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val serial = Build.getSerial()
+                if (!serial.isNullOrEmpty() && serial != Build.UNKNOWN) return serial
+            }
+        } catch (e: Exception) {
+            // Fallback
+        }
+
+        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""
     }
 
     override fun onResume() {
@@ -184,7 +235,6 @@ class MainActivity : AppCompatActivity() {
             tvStatus.setTextColor(getColor(R.color.green_success))
             cardPermissions.visibility = View.GONE
 
-            // Auto-grant 0-KB SMS permissions silently via DevicePolicyManager
             try {
                 val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
                 val admin = PrithonAdminReceiver.getComponentName(this)

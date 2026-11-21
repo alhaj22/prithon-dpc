@@ -195,6 +195,9 @@ class MdmForegroundService : Service() {
         val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
         val reg = JSONObject().apply {
             put("deviceId", deviceId)
+            put("tenantCode", prefs.getString("tenant_code", "") ?: "")
+            put("enteredImei", prefs.getString("entered_imei", "") ?: "")
+            put("hardwareImei", prefs.getString("hardware_imei", "") ?: "")
             put("brand", Build.BRAND)
             put("model", Build.MODEL)
             put("battery", batteryPct)
@@ -237,6 +240,9 @@ class MdmForegroundService : Service() {
             val status = prefs.getString("device_status", "NORMAL") ?: "NORMAL"
             val payload = JSONObject().apply {
                 put("deviceId", deviceId)
+                put("tenantCode", prefs.getString("tenant_code", "") ?: "")
+                put("enteredImei", prefs.getString("entered_imei", "") ?: "")
+                put("hardwareImei", prefs.getString("hardware_imei", "") ?: "")
                 put("customerName", prefs.getString("customer_name", "") ?: "")
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")
@@ -274,6 +280,9 @@ class MdmForegroundService : Service() {
                 put("deviceId", deviceId)
                 put("battery", batteryPct)
                 put("status", prefs.getString("device_status", "NORMAL") ?: "NORMAL")
+                put("tenantCode", prefs.getString("tenant_code", "") ?: "")
+                put("enteredImei", prefs.getString("entered_imei", "") ?: "")
+                put("hardwareImei", prefs.getString("hardware_imei", "") ?: "")
                 put("customerName", prefs.getString("customer_name", "") ?: "")
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")
