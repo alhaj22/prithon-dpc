@@ -121,6 +121,28 @@ class MainActivity : AppCompatActivity() {
         loadCustomerUI()
 
         btnSaveCustomer.setOnClickListener {
+            val isOwner = lockManager.isDeviceOwner()
+            val isAdmin = lockManager.isDeviceAdmin()
+            val canOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Settings.canDrawOverlays(this) else true
+
+            if (!isOwner && !isAdmin) {
+                Toast.makeText(this, "⚠️ Please activate Device Administrator first!", Toast.LENGTH_LONG).show()
+                val adminComp = PrithonAdminReceiver.getComponentName(this)
+                val adminIntent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                    putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComp)
+                    putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Device Admin permission is required to lock device.")
+                }
+                startActivity(adminIntent)
+                return@setOnClickListener
+            }
+
+            if (!isOwner && !canOverlay && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Toast.makeText(this, "⚠️ Please grant 'Display over other apps' to allow instant lock!", Toast.LENGTH_LONG).show()
+                val overlayIntent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                startActivity(overlayIntent)
+                return@setOnClickListener
+            }
+
             val tenantCode = etTenantCode.text.toString().trim().uppercase()
             val name = etCustomerName.text.toString().trim()
             val phone = etCustomerPhone.text.toString().trim()

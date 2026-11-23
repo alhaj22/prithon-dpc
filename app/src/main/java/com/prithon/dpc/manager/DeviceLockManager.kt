@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
@@ -57,18 +59,20 @@ class DeviceLockManager(private val context: Context) {
 
     /**
      * Executes Kiosk Lock across all Android privilege tiers:
-     * 1. Hardware Screen Lock via Device Admin (dpm.lockNow)
+     * 1. Screen WakeLock to ensure screen stays active & visible
      * 2. Device Owner Kiosk Pinning (if DO)
-     * 3. System Overlay Screen Guard (if Overlay permitted)
-     * 4. BAL-Exempt Activity Launch & Fullscreen Intent Notification
+     * 3. Instant System Overlay View on WindowManager (draws over ANY running app)
+     * 4. Direct Fullscreen LockActivity Launch
+     * 5. High-Priority FullScreen Notification Intent
+     * (NOTE: dpm.lockNow is intentionally NOT called so screen does NOT shut off)
      */
     fun lockDevice() {
         isKioskLocked = true
         val isOwner = isDeviceOwner()
         val isAdmin = isDeviceAdmin()
-        Log.i(TAG, "Initiating lockDevice... isDeviceOwner=$isOwner, isDeviceAdmin=$isAdmin")
+        Log.i(TAG, "Initiating direct lockDevice... isDeviceOwner=$isOwner, isDeviceAdmin=$isAdmin")
 
-        // 1. Wake the display so lock screen is visible
+        // 1. Wake the display so lock screen is visible immediately
         try {
             val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             @Suppress("DEPRECATION")
@@ -76,7 +80,7 @@ class DeviceLockManager(private val context: Context) {
                 PowerManager.FULL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP or PowerManager.ON_AFTER_RELEASE,
                 "Prithon:LockWakeLock"
             )
-            wakeLock.acquire(3000)
+            wakeLock.acquire(10000)
         } catch (e: Exception) {
             Log.w(TAG, "WakeLock warning: ${e.message}")
         }
@@ -99,10 +103,12 @@ class DeviceLockManager(private val context: Context) {
             }
         }
 
-        // 3. Show System Overlay Window (Instant, works even in background without startActivity)
-        showSystemOverlay()
+        // 3. Show System Overlay Window on Main UI Thread (Overlays over ANY app instantly)
+        Handler(Looper.getMainLooper()).post {
+            showSystemOverlay()
+        }
 
-        // 4. Launch Kiosk Lock Activity
+        // 4. Launch Kiosk Lock Activity directly
         try {
             val lockIntent = Intent(context, LockActivity::class.java).apply {
                 addFlags(
@@ -113,23 +119,13 @@ class DeviceLockManager(private val context: Context) {
                 )
             }
             context.startActivity(lockIntent)
-            Log.i(TAG, "startActivity(LockActivity) invoked.")
+            Log.i(TAG, "startActivity(LockActivity) invoked directly.")
         } catch (e: Exception) {
             Log.e(TAG, "startActivity failed, falling back to full-screen intent", e)
         }
 
-        // 5. Fallback Fullscreen Intent via High-Priority Notification
+        // 5. Fallback Fullscreen Intent via High-Priority Emergency Notification
         launchFullScreenLockNotification()
-
-        // 6. Instant Hardware Screen Lock via Device Admin
-        if (isAdmin) {
-            try {
-                dpm.lockNow()
-                Log.i(TAG, "dpm.lockNow() executed successfully.")
-            } catch (e: Exception) {
-                Log.w(TAG, "dpm.lockNow() warning: ${e.message}")
-            }
-        }
     }
 
     private fun showSystemOverlay() {
@@ -163,10 +159,11 @@ class DeviceLockManager(private val context: Context) {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 layoutType,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 PixelFormat.TRANSLUCENT
             )
 
@@ -266,16 +263,18 @@ class DeviceLockManager(private val context: Context) {
         isKioskLocked = false
         Log.i(TAG, "Initiating unlockDevice...")
 
-        // 1. Remove System Overlay View
-        try {
-            if (overlayView != null) {
-                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                wm.removeView(overlayView)
-                overlayView = null
-                Log.i(TAG, "System overlay view removed.")
+        // 1. Remove System Overlay View on Main Thread
+        Handler(Looper.getMainLooper()).post {
+            try {
+                if (overlayView != null) {
+                    val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                    wm.removeView(overlayView)
+                    overlayView = null
+                    Log.i(TAG, "System overlay view removed.")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error removing overlay view: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "Error removing overlay view: ${e.message}")
         }
 
         // 2. Dismiss full-screen lock notification
