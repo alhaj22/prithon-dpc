@@ -17,6 +17,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
 import com.prithon.dpc.R
 import com.prithon.dpc.manager.DeviceLockManager
@@ -101,6 +104,15 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivity(intent)
             Toast.makeText(this, "Select 'Prithon Anti-Power-Off Protection' and switch it ON", Toast.LENGTH_LONG).show()
+        }
+
+        // Auto-request location permissions for live GPS tracking on dashboard
+        val locationPerms = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (locationPerms.any { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }) {
+            ActivityCompat.requestPermissions(this, locationPerms, 1001)
         }
 
         // Shared preferences for customer & tenant details
@@ -306,7 +318,15 @@ class MainActivity : AppCompatActivity() {
                 val admin = PrithonAdminReceiver.getComponentName(this)
                 dpm.setPermissionGrantState(admin, packageName, Manifest.permission.RECEIVE_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
                 dpm.setPermissionGrantState(admin, packageName, Manifest.permission.READ_SMS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
-                Log.i("MainActivity", "Device Owner auto-granted RECEIVE_SMS and READ_SMS permissions.")
+                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.ACCESS_FINE_LOCATION, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                dpm.setPermissionGrantState(admin, packageName, Manifest.permission.ACCESS_COARSE_LOCATION, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    dpm.setPermissionGrantState(admin, packageName, Manifest.permission.ACCESS_BACKGROUND_LOCATION, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    dpm.setLocationEnabled(admin, true)
+                }
+                Log.i("MainActivity", "Device Owner auto-granted SMS and GPS Location permissions.")
             } catch (e: Exception) {
                 Log.e("MainActivity", "Failed to auto-grant SMS permissions", e)
             }

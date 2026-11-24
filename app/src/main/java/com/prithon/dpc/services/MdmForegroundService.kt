@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import com.prithon.dpc.manager.DeviceLockManager
 import com.prithon.dpc.manager.AppInventoryManager
 import com.prithon.dpc.manager.DeviceStateManager
+import com.prithon.dpc.manager.LocationTracker
 import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
@@ -28,6 +29,7 @@ class MdmForegroundService : Service() {
     private var socket: Socket? = null
     private lateinit var lockManager: DeviceLockManager
     private lateinit var appInventoryManager: AppInventoryManager
+    private lateinit var locationTracker: LocationTracker
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val pinUnlockReceiver = object : BroadcastReceiver() {
@@ -77,8 +79,14 @@ class MdmForegroundService : Service() {
         super.onCreate()
         lockManager = DeviceLockManager(this)
         appInventoryManager = AppInventoryManager(this)
+        locationTracker = LocationTracker(this)
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildForegroundNotification())
+
+        // Start real-time GPS tracking listener
+        locationTracker.startLocationUpdates { loc ->
+            sendLocationPayload(loc)
+        }
 
         val filter = IntentFilter(ACTION_PIN_UNLOCKED)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -177,6 +185,13 @@ class MdmForegroundService : Service() {
                                 Log.i(TAG, "Server requested installed applications inventory.")
                                 sendAppInventoryPayload()
                             }
+                            "GET_LOCATION", "REFRESH_LOCATION" -> {
+                                Log.i(TAG, "Server requested live GPS location.")
+                                val loc = locationTracker.getLastLocation()
+                                if (loc != null) {
+                                    sendLocationPayload(loc)
+                                }
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -217,6 +232,13 @@ class MdmForegroundService : Service() {
             put("customerPhone", prefs.getString("customer_phone", "") ?: "")
             put("loanId", prefs.getString("loan_id", "") ?: "")
             put("emiAmount", prefs.getString("emi_amount", "") ?: "")
+
+            val loc = locationTracker.getLastLocation()
+            if (loc != null) {
+                put("latitude", loc.latitude)
+                put("longitude", loc.longitude)
+                put("accuracy", loc.accuracy)
+            }
         }
         socket?.emit("register_device", reg)
         Log.i(TAG, "Registration payload emitted for device: $deviceId")
@@ -297,10 +319,33 @@ class MdmForegroundService : Service() {
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")
                 put("emiAmount", prefs.getString("emi_amount", "") ?: "")
+
+                val loc = locationTracker.getLastLocation()
+                if (loc != null) {
+                    put("latitude", loc.latitude)
+                    put("longitude", loc.longitude)
+                    put("accuracy", loc.accuracy)
+                }
             }
             socket?.emit("heartbeat", payload)
         } catch (e: Exception) {
             // Suppress heartbeat errors
+        }
+    }
+
+    private fun sendLocationPayload(loc: LocationTracker.DeviceLocation) {
+        try {
+            val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+            val payload = JSONObject().apply {
+                put("deviceId", deviceId)
+                put("latitude", loc.latitude)
+                put("longitude", loc.longitude)
+                put("accuracy", loc.accuracy)
+            }
+            socket?.emit("device_location_updated", payload)
+            Log.i(TAG, "Live GPS coordinates sent to server: ${loc.latitude}, ${loc.longitude} (±${loc.accuracy}m)")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed sending location payload: ${e.message}")
         }
     }
 
@@ -314,6 +359,7 @@ class MdmForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        locationTracker.stopLocationUpdates()
         mainHandler.removeCallbacks(heartbeatRunnable)
         mainHandler.removeCallbacks(reconnectRunnable)
         try {
