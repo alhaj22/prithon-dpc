@@ -88,6 +88,16 @@ class MdmForegroundService : Service() {
 
         connectToControlPlane()
         mainHandler.post(heartbeatRunnable)
+
+        // Persistent Lock Check: If device was LOCKED, re-lock immediately!
+        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+        val status = prefs.getString("device_status", "NORMAL") ?: "NORMAL"
+        if (status == "LOCKED") {
+            Log.w(TAG, "Restoring active KIOSK LOCK on MdmForegroundService startup!")
+            mainHandler.postDelayed({
+                lockManager.lockDevice()
+            }, 500)
+        }
     }
 
     private fun createNotificationChannel() {

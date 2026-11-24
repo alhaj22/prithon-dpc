@@ -85,7 +85,7 @@ class DeviceLockManager(private val context: Context) {
             Log.w(TAG, "WakeLock warning: ${e.message}")
         }
 
-        // 2. Hardware-level policies if Device Owner
+        // 2. Hardware-level policies if Device Owner (Block Power Off, Safe Boot, Factory Reset)
         if (isOwner) {
             try {
                 dpm.setLockTaskPackages(admin, arrayOf(context.packageName))
@@ -93,11 +93,12 @@ class DeviceLockManager(private val context: Context) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     dpm.setLockTaskFeatures(
                         admin,
-                        DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS or
-                        DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO
+                        DevicePolicyManager.LOCK_TASK_FEATURE_NONE
                     )
                 }
-                Log.i(TAG, "Device Owner hardware lock policies applied.")
+                dpm.addUserRestriction(admin, android.os.UserManager.DISALLOW_SAFE_BOOT)
+                dpm.addUserRestriction(admin, android.os.UserManager.DISALLOW_FACTORY_RESET)
+                Log.i(TAG, "Device Owner hardware lock policies applied: Power Menu Disabled, Safe Boot Blocked, Factory Reset Blocked.")
             } catch (e: Exception) {
                 Log.w(TAG, "Device Owner policy warning: ${e.message}")
             }
@@ -290,6 +291,8 @@ class DeviceLockManager(private val context: Context) {
             try {
                 dpm.setLockTaskPackages(admin, arrayOf())
                 dpm.setStatusBarDisabled(admin, false)
+                dpm.clearUserRestriction(admin, android.os.UserManager.DISALLOW_SAFE_BOOT)
+                dpm.clearUserRestriction(admin, android.os.UserManager.DISALLOW_FACTORY_RESET)
             } catch (e: Exception) {
                 Log.w(TAG, "Device Owner release policy warning: ${e.message}")
             }

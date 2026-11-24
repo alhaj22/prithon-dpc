@@ -7,6 +7,8 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
@@ -27,6 +29,19 @@ class LockActivity : AppCompatActivity() {
             if (intent?.action == MdmForegroundService.ACTION_REMOTE_UNLOCK) {
                 Toast.makeText(this@LockActivity, "Device Unlocked by Server", Toast.LENGTH_SHORT).show()
                 performUnlock()
+            }
+        }
+    }
+
+    // Intercept Power Menu, Quick Settings, Home, Recents
+    private val systemDialogsReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_CLOSE_SYSTEM_DIALOGS) {
+                val reason = intent.getStringExtra("reason")
+                Log.i("LockActivity", "Intercepted system dialog: $reason. Dismissing Power / Global Dialogs!")
+                if (!isUnlocked && DeviceLockManager.isKioskLocked) {
+                    dismissSystemDialogs()
+                }
             }
         }
     }
@@ -96,6 +111,50 @@ class LockActivity : AppCompatActivity() {
         }
     }
 
+    private fun dismissSystemDialogs() {
+        try {
+            @Suppress("DEPRECATION")
+            val closeDialogs = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+            sendBroadcast(closeDialogs)
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+
+    private fun hideSystemBars() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.insetsController?.let { controller ->
+                    controller.hide(android.view.WindowInsets.Type.statusBars() or android.view.WindowInsets.Type.navigationBars())
+                    controller.systemBarsBehavior = android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+                )
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!isUnlocked && DeviceLockManager.isKioskLocked) {
+            hideSystemBars()
+            if (!hasFocus) {
+                // If focus lost to power menu or notification shade, close it immediately!
+                dismissSystemDialogs()
+            }
+        }
+    }
+
     private fun performUnlock() {
         isUnlocked = true
         DeviceLockManager.isKioskLocked = false
@@ -110,6 +169,7 @@ class LockActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        hideSystemBars()
         if (lockManager.isDeviceOwner() && !isUnlocked) {
             try {
                 startLockTask()
@@ -117,11 +177,16 @@ class LockActivity : AppCompatActivity() {
                 // Ignore
             }
         }
-        val filter = IntentFilter(MdmForegroundService.ACTION_REMOTE_UNLOCK)
+
+        val unlockFilter = IntentFilter(MdmForegroundService.ACTION_REMOTE_UNLOCK)
+        val dialogsFilter = IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(remoteUnlockReceiver, filter, RECEIVER_NOT_EXPORTED)
+            registerReceiver(remoteUnlockReceiver, unlockFilter, RECEIVER_NOT_EXPORTED)
+            registerReceiver(systemDialogsReceiver, dialogsFilter, RECEIVER_NOT_EXPORTED)
         } else {
-            registerReceiver(remoteUnlockReceiver, filter)
+            registerReceiver(remoteUnlockReceiver, unlockFilter)
+            registerReceiver(systemDialogsReceiver, dialogsFilter)
         }
     }
 
@@ -129,6 +194,7 @@ class LockActivity : AppCompatActivity() {
         super.onPause()
         try {
             unregisterReceiver(remoteUnlockReceiver)
+            unregisterReceiver(systemDialogsReceiver)
         } catch (e: Exception) {
             // Ignore
         }
