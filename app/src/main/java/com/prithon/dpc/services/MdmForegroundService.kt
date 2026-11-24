@@ -192,6 +192,11 @@ class MdmForegroundService : Service() {
                                     sendLocationPayload(loc)
                                 }
                             }
+                            "RELEASE_AND_UNINSTALL", "DELETE_DEVICE", "UNENROLL" -> {
+                                Log.w(TAG, "Server issued permanent RELEASE_AND_UNINSTALL! Releasing device and removing app...")
+                                lockManager.releaseAndUninstall()
+                                stopSelf()
+                            }
                         }
                     }
                 } catch (e: Exception) {

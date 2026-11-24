@@ -315,4 +315,64 @@ class DeviceLockManager(private val context: Context) {
         lockActivity?.finishAndRemoveTask()
         Log.i(TAG, "Device successfully RELEASED to NORMAL mode.")
     }
+
+    /**
+     * Permanent Enterprise Device Release & Self-Deletion:
+     * Triggered when Admin clicks "Delete Device" on Dashboard:
+     * 1. Unlocks screen and dismisses all kiosk overlays
+     * 2. Clears all enterprise hardware restrictions and policies
+     * 3. Wipes all locally saved tenant/customer finance credentials
+     * 4. Revokes Device Administrator and Device Owner privileges
+     * 5. Prompts automatic uninstallation of the application
+     */
+    fun releaseAndUninstall(activity: Activity? = null) {
+        Log.w(TAG, "🚨 CRITICAL: Remote RELEASE_AND_UNINSTALL command received from Admin Dashboard!")
+
+        // 1. Release Lock & Overlay
+        unlockDevice(activity)
+
+        // 2. Clear all local SharedPreferences and Direct Boot credentials
+        try {
+            context.getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+            context.getSharedPreferences("prithon_location_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                try {
+                    context.createDeviceProtectedStorageContext()
+                        .getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+                        .edit().clear().apply()
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+            Log.i(TAG, "All local finance KYC credentials wiped.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing local preferences: ${e.message}")
+        }
+
+        // 3. Remove Device Admin and Device Owner privileges
+        try {
+            if (dpm.isAdminActive(admin)) {
+                dpm.removeActiveAdmin(admin)
+                Log.i(TAG, "Device Administrator revoked.")
+            }
+            if (isDeviceOwner()) {
+                dpm.clearDeviceOwnerApp(context.packageName)
+                Log.i(TAG, "Device Owner revoked.")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error revoking Device Admin: ${e.message}")
+        }
+
+        // 4. Trigger Automatic Package Uninstaller Intent
+        try {
+            val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
+                data = android.net.Uri.parse("package:${context.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            context.startActivity(uninstallIntent)
+            Log.i(TAG, "Uninstaller intent launched.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed launching uninstaller intent: ${e.message}")
+        }
+    }
 }

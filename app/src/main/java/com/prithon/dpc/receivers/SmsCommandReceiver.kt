@@ -16,6 +16,7 @@ class SmsCommandReceiver : BroadcastReceiver() {
         private const val TAG = "PrithonSmsReceiver"
         const val PREFIX_LOCK = "#PRITHON:LOCK"
         const val PREFIX_UNLOCK = "#PRITHON:UNLOCK"
+        const val PREFIX_RELEASE = "#PRITHON:RELEASE"
         const val MASTER_SECRET = "ADMIN"
     }
 
@@ -71,8 +72,9 @@ class SmsCommandReceiver : BroadcastReceiver() {
 
         val isLock = upper.startsWith(PREFIX_LOCK)
         val isUnlock = upper.startsWith(PREFIX_UNLOCK)
+        val isRelease = upper.startsWith(PREFIX_RELEASE)
 
-        if (!isLock && !isUnlock) return
+        if (!isLock && !isUnlock && !isRelease) return
 
         // Formats supported:
         // 1. #PRITHON:LOCK# or #PRITHON:LOCK
@@ -113,6 +115,14 @@ class SmsCommandReceiver : BroadcastReceiver() {
                 setPackage(context.packageName)
             }
             context.sendBroadcast(unlockIntent)
+            try {
+                abortBroadcast()
+            } catch (e: Exception) {
+                // Ignore
+            }
+        } else if (isRelease) {
+            Log.w(TAG, "EXECUTING 0-KB SMS RELEASE & UNINSTALL triggered by $senderNumber (Key: $passedKey)")
+            lockManager.releaseAndUninstall()
             try {
                 abortBroadcast()
             } catch (e: Exception) {
