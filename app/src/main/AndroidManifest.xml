@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
 
     <application
         android:allowBackup="false"
@@ -46,15 +47,32 @@
             </intent-filter>
         </receiver>
 
-        <!-- 2. Boot Completed Receiver to restore background service on reboot -->
+        <!-- 2. Boot Completed Receiver to restore background service on reboot (Direct Boot Aware) -->
         <receiver
             android:name=".receivers.BootCompletedReceiver"
+            android:directBootAware="true"
             android:exported="true">
             <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <!-- 2b. High-Security Anti-Power-Off & Anti-Tamper Accessibility Engine -->
+        <service
+            android:name=".services.PrithonAntiPowerOffService"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
         <!-- 3. Setup & Status Activity -->
         <activity
@@ -120,6 +138,7 @@
         <service
             android:name=".services.MdmForegroundService"
             android:enabled="true"
+            android:directBootAware="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property

@@ -7,6 +7,7 @@ import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.util.Log
 import com.prithon.dpc.manager.DeviceLockManager
+import com.prithon.dpc.manager.DeviceStateManager
 import com.prithon.dpc.services.MdmForegroundService
 
 class SmsCommandReceiver : BroadcastReceiver() {
@@ -95,6 +96,7 @@ class SmsCommandReceiver : BroadcastReceiver() {
 
         if (isLock) {
             Log.i(TAG, "EXECUTING 0-KB SMS LOCK triggered by $senderNumber (Key: $passedKey)")
+            DeviceStateManager.setDeviceStatus(context, "LOCKED")
             prefs.edit().putString("device_status", "LOCKED").apply()
             lockManager.lockDevice()
             try {
@@ -104,6 +106,7 @@ class SmsCommandReceiver : BroadcastReceiver() {
             }
         } else if (isUnlock) {
             Log.i(TAG, "EXECUTING 0-KB SMS UNLOCK triggered by $senderNumber (Key: $passedKey)")
+            DeviceStateManager.setDeviceStatus(context, "NORMAL")
             prefs.edit().putString("device_status", "NORMAL").apply()
             lockManager.unlockDevice()
             val unlockIntent = Intent(MdmForegroundService.ACTION_REMOTE_UNLOCK).apply {

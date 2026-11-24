@@ -14,6 +14,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
@@ -60,14 +61,15 @@ class DeviceLockManager(private val context: Context) {
     /**
      * Executes Kiosk Lock across all Android privilege tiers:
      * 1. Screen WakeLock to ensure screen stays active & visible
-     * 2. Device Owner Kiosk Pinning (if DO)
-     * 3. Instant System Overlay View on WindowManager (draws over ANY running app)
+     * 2. Device Owner Kiosk Pinning & Anti-Power-Off suppression (LOCK_TASK_FEATURE_NONE)
+     * 3. Instant System Overlay View on WindowManager (draws over ANY running app edge-to-edge)
      * 4. Direct Fullscreen LockActivity Launch
      * 5. High-Priority FullScreen Notification Intent
-     * (NOTE: dpm.lockNow is intentionally NOT called so screen does NOT shut off)
+     * 6. Direct Boot & CE persistence via DeviceStateManager
      */
     fun lockDevice() {
         isKioskLocked = true
+        DeviceStateManager.setDeviceStatus(context, "LOCKED")
         val isOwner = isDeviceOwner()
         val isAdmin = isDeviceAdmin()
         Log.i(TAG, "Initiating direct lockDevice... isDeviceOwner=$isOwner, isDeviceAdmin=$isAdmin")
@@ -166,7 +168,12 @@ class DeviceLockManager(private val context: Context) {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 PixelFormat.TRANSLUCENT
-            )
+            ).apply {
+                gravity = Gravity.FILL
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
 
             // Wire up overlay unlock button
             val etPin = view.findViewById<EditText>(R.id.etUnlockPin)
@@ -262,6 +269,7 @@ class DeviceLockManager(private val context: Context) {
      */
     fun unlockDevice(lockActivity: Activity? = null) {
         isKioskLocked = false
+        DeviceStateManager.setDeviceStatus(context, "NORMAL")
         Log.i(TAG, "Initiating unlockDevice...")
 
         // 1. Remove System Overlay View on Main Thread

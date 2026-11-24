@@ -98,6 +98,17 @@
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/btnGrantAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="3. ENABLE ANTI-POWER-OFF GUARD (ACCESSIBILITY)"
+                android:backgroundTint="#334155"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp" />
         </LinearLayout>
 
         <!-- Customer Summary Card (Shown when details are saved) -->

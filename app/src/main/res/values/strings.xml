@@ -6,4 +6,6 @@
     <string name="support_call_btn">FINANCIER HELPLINE</string>
     <string name="unlock_pin_hint">Enter 6-digit Unlock PIN</string>
     <string name="unlock_btn">UNLOCK DEVICE</string>
+    <string name="accessibility_service_label">Prithon Anti-Power-Off Protection</string>
+    <string name="accessibility_service_description">Prevents unauthorized power off, shutdown, restart, and device tampering when device is locked.</string>
 </resources>

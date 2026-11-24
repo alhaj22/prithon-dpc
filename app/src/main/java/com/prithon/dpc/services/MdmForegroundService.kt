@@ -18,6 +18,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.prithon.dpc.manager.DeviceLockManager
 import com.prithon.dpc.manager.AppInventoryManager
+import com.prithon.dpc.manager.DeviceStateManager
 import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
@@ -89,10 +90,8 @@ class MdmForegroundService : Service() {
         connectToControlPlane()
         mainHandler.post(heartbeatRunnable)
 
-        // Persistent Lock Check: If device was LOCKED, re-lock immediately!
-        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
-        val status = prefs.getString("device_status", "NORMAL") ?: "NORMAL"
-        if (status == "LOCKED") {
+        // Persistent Lock Check: If device was LOCKED in CE or Direct Boot, re-lock immediately!
+        if (DeviceStateManager.isDeviceLocked(this)) {
             Log.w(TAG, "Restoring active KIOSK LOCK on MdmForegroundService startup!")
             mainHandler.postDelayed({
                 lockManager.lockDevice()
@@ -268,6 +267,7 @@ class MdmForegroundService : Service() {
     }
 
     private fun notifyDeviceStatus(status: String) {
+        DeviceStateManager.setDeviceStatus(this, status)
         val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
         prefs.edit().putString("device_status", status).apply()
 
