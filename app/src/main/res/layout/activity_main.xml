@@ -397,5 +397,17 @@
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
+        <!-- Danger Zone: Deactivate Admin & Uninstall -->
+        <Button
+            android:id="@+id/btnDeactivateAndUninstall"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="🗑️ DEACTIVATE ADMIN &amp; UNINSTALL APP"
+            android:backgroundTint="#7F1D1D"
+            android:textColor="#FCA5A5"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
     </LinearLayout>
 </ScrollView>

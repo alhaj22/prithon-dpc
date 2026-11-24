@@ -349,30 +349,99 @@ class DeviceLockManager(private val context: Context) {
             Log.e(TAG, "Error clearing local preferences: ${e.message}")
         }
 
-        // 3. Remove Device Admin and Device Owner privileges
+        // 3. Remove Device Owner privileges FIRST, then Device Administrator
         try {
-            if (dpm.isAdminActive(admin)) {
-                dpm.removeActiveAdmin(admin)
-                Log.i(TAG, "Device Administrator revoked.")
-            }
             if (isDeviceOwner()) {
-                dpm.clearDeviceOwnerApp(context.packageName)
-                Log.i(TAG, "Device Owner revoked.")
+                try {
+                    dpm.setLockTaskPackages(admin, arrayOf())
+                    dpm.setStatusBarDisabled(admin, false)
+                    dpm.clearUserRestriction(admin, android.os.UserManager.DISALLOW_SAFE_BOOT)
+                    dpm.clearUserRestriction(admin, android.os.UserManager.DISALLOW_FACTORY_RESET)
+                    dpm.clearDeviceOwnerApp(context.packageName)
+                    Log.i(TAG, "Device Owner successfully cleared.")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error clearing Device Owner: ${e.message}")
+                }
+            }
+
+            if (dpm.isAdminActive(admin)) {
+                try {
+                    dpm.removeActiveAdmin(admin)
+                    Log.i(TAG, "Device Administrator successfully revoked.")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error revoking active admin: ${e.message}")
+                }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error revoking Device Admin: ${e.message}")
+            Log.e(TAG, "Error revoking privileges: ${e.message}")
         }
 
-        // 4. Trigger Automatic Package Uninstaller Intent
-        try {
-            val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
-                data = android.net.Uri.parse("package:${context.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        // 4. Trigger Automatic Package Uninstaller
+        launchUninstallPrompt(activity)
+    }
+
+    private fun launchUninstallPrompt(activity: Activity? = null) {
+        val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
+            data = android.net.Uri.parse("package:${context.packageName}")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+
+        // A. If an activity context is available, launch directly from foreground
+        if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
+            try {
+                activity.startActivity(uninstallIntent)
+                Log.i(TAG, "Uninstaller intent launched from Activity.")
+                return
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed launching from activity: ${e.message}")
             }
+        }
+
+        // B. Fallback: Launch from Application Context with FLAG_ACTIVITY_NEW_TASK
+        try {
             context.startActivity(uninstallIntent)
-            Log.i(TAG, "Uninstaller intent launched.")
+            Log.i(TAG, "Uninstaller intent launched from Application Context.")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed launching uninstaller intent: ${e.message}")
+            Log.w(TAG, "BAL restriction prevented direct startActivity: ${e.message}")
+        }
+
+        // C. Fullscreen Notification Fallback (Guaranteed to bypass Android 10-14 BAL restrictions)
+        try {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channelId = "prithon_uninstall_channel"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId,
+                    "Device Release Uninstaller",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    setBypassDnd(true)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                }
+                nm.createNotificationChannel(channel)
+            }
+
+            val pi = PendingIntent.getActivity(
+                context,
+                1099,
+                uninstallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+            )
+
+            val builder = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(android.R.drawable.ic_menu_delete)
+                .setContentTitle("Device Released by Financier")
+                .setContentText("Tap here to complete uninstallation of Prithon Guard.")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setFullScreenIntent(pi, true)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+
+            nm.notify(1099, builder.build())
+            Log.i(TAG, "Uninstaller Fullscreen Notification posted.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed posting uninstaller notification: ${e.message}")
         }
     }
 }

@@ -195,7 +195,9 @@ class MdmForegroundService : Service() {
                             "RELEASE_AND_UNINSTALL", "DELETE_DEVICE", "UNENROLL" -> {
                                 Log.w(TAG, "Server issued permanent RELEASE_AND_UNINSTALL! Releasing device and removing app...")
                                 lockManager.releaseAndUninstall()
-                                stopSelf()
+                                mainHandler.postDelayed({
+                                    stopSelf()
+                                }, 3000)
                             }
                         }
                     }

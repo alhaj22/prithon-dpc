@@ -238,6 +238,19 @@ class MainActivity : AppCompatActivity() {
             cardCustomerForm.visibility = View.VISIBLE
         }
 
+        val btnDeactivateAndUninstall = findViewById<Button>(R.id.btnDeactivateAndUninstall)
+        btnDeactivateAndUninstall.setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Deactivate Admin & Uninstall?")
+                .setMessage("Kya aap Device Administrator revoke karke Prithon Finance Guard ko phone se uninstall karna chahte hain?")
+                .setPositiveButton("YES, UNINSTALL") { _, _ ->
+                    Toast.makeText(this, "Admin deactivate ho raha hai...", Toast.LENGTH_SHORT).show()
+                    lockManager.releaseAndUninstall(this)
+                }
+                .setNegativeButton("CANCEL", null)
+                .show()
+        }
+
         // Start Foreground Service
         val serviceIntent = Intent(this, MdmForegroundService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
