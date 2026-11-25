@@ -81,8 +81,14 @@ class MdmForegroundService : Service() {
     private var currentEndpointIndex = 0
 
     private val reconnectRunnable = Runnable {
-        val list = getActiveEndpoints()
-        currentEndpointIndex = (currentEndpointIndex + 1) % list.size
+        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+        val custom = prefs.getString("server_url", null)
+        if (!custom.isNullOrEmpty()) {
+            currentEndpointIndex = 0
+        } else {
+            val list = getActiveEndpoints()
+            currentEndpointIndex = (currentEndpointIndex + 1) % list.size
+        }
         connectToControlPlane()
     }
 
@@ -152,8 +158,10 @@ class MdmForegroundService : Service() {
         Log.i(TAG, "Attempting connection to gateway: $targetUrl")
         try {
             val options = IO.Options().apply {
-                reconnection = false
-                timeout = 6000
+                reconnection = true
+                reconnectionAttempts = Int.MAX_VALUE
+                reconnectionDelay = 2000
+                timeout = 10000
             }
 
             socket?.disconnect()
