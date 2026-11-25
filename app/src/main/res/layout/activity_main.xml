@@ -375,7 +375,7 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- Device Info Card -->
+        <!-- Device Info & App Version Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -385,13 +385,23 @@
             android:layout_marginBottom="16dp">
 
             <TextView
+                android:id="@+id/tvAppVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="App Version: v1.2.0 (Build 3)"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/tvDeviceId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Device ID: ..."
-                android:textColor="@color/text_primary"
+                android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:fontFamily="monospace" />
+                android:fontFamily="monospace"
+                android:layout_marginTop="4dp" />
 
             <TextView
                 android:id="@+id/tvServerEndpoint"
@@ -401,6 +411,17 @@
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 android:layout_marginTop="4dp" />
+
+            <Button
+                android:id="@+id/btnCheckUpdate"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="🔄 CHECK FOR APP UPDATES"
+                android:backgroundTint="@color/input_bg"
+                android:textColor="@color/primary_accent"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="12dp" />
         </LinearLayout>
 
         <!-- Danger Zone: Deactivate Admin & Uninstall -->

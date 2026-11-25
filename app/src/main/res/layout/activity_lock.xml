@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/device_locked_title"
-            android:textColor="@color/red_alert"
+            android:textColor="@color/green_success"
             android:textSize="24sp"
             android:textStyle="bold"
             android:letterSpacing="0.04" />
