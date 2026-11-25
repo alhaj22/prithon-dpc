@@ -57,21 +57,32 @@ class MdmForegroundService : Service() {
         // Enterprise Multi-Gateway Endpoints (Cloud Public HTTPS + Local Fallbacks)
         const val CLOUD_SERVER_URL = "https://prithon-mdm-backend.onrender.com"
         const val DEFAULT_SERVER_URL = "https://prithon-mdm-backend.onrender.com"
+        const val LOCAL_WIFI_SERVER_URL = "http://192.168.1.3:4000"
         const val USB_LOCAL_SERVER_URL = "http://127.0.0.1:4000"
         const val ACTION_REMOTE_UNLOCK = "com.prithon.dpc.ACTION_REMOTE_UNLOCK"
         const val ACTION_PIN_UNLOCKED = "com.prithon.dpc.ACTION_PIN_UNLOCKED"
         const val ACTION_CUSTOMER_UPDATED = "com.prithon.dpc.ACTION_CUSTOMER_UPDATED"
+        const val ACTION_RECONNECT_SERVER = "com.prithon.dpc.ACTION_RECONNECT_SERVER"
     }
 
-    private val endpoints = listOf(
-        CLOUD_SERVER_URL,
-        DEFAULT_SERVER_URL,
-        USB_LOCAL_SERVER_URL
-    )
+    private fun getActiveEndpoints(): List<String> {
+        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+        val custom = prefs.getString("server_url", null)
+        val list = mutableListOf<String>()
+        if (!custom.isNullOrEmpty()) {
+            list.add(custom)
+        }
+        if (!list.contains(LOCAL_WIFI_SERVER_URL)) list.add(LOCAL_WIFI_SERVER_URL)
+        if (!list.contains(CLOUD_SERVER_URL)) list.add(CLOUD_SERVER_URL)
+        if (!list.contains(USB_LOCAL_SERVER_URL)) list.add(USB_LOCAL_SERVER_URL)
+        return list
+    }
+
     private var currentEndpointIndex = 0
 
     private val reconnectRunnable = Runnable {
-        currentEndpointIndex = (currentEndpointIndex + 1) % endpoints.size
+        val list = getActiveEndpoints()
+        currentEndpointIndex = (currentEndpointIndex + 1) % list.size
         connectToControlPlane()
     }
 
@@ -133,7 +144,11 @@ class MdmForegroundService : Service() {
     }
 
     private fun connectToControlPlane() {
-        val targetUrl = endpoints[currentEndpointIndex]
+        val endpointsList = getActiveEndpoints()
+        if (currentEndpointIndex >= endpointsList.size) {
+            currentEndpointIndex = 0
+        }
+        val targetUrl = endpointsList[currentEndpointIndex]
         Log.i(TAG, "Attempting connection to gateway: $targetUrl")
         try {
             val options = IO.Options().apply {
@@ -357,9 +372,17 @@ class MdmForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_CUSTOMER_UPDATED) {
-            sendCustomerUpdatePayload()
-            sendAppInventoryPayload()
+        when (intent?.action) {
+            ACTION_CUSTOMER_UPDATED -> {
+                sendCustomerUpdatePayload()
+                sendAppInventoryPayload()
+            }
+            ACTION_RECONNECT_SERVER -> {
+                Log.i(TAG, "ACTION_RECONNECT_SERVER received. Force reconnecting immediately...")
+                currentEndpointIndex = 0
+                mainHandler.removeCallbacks(reconnectRunnable)
+                connectToControlPlane()
+            }
         }
         return START_STICKY
     }

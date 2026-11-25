@@ -413,6 +413,17 @@
                 android:layout_marginTop="4dp" />
 
             <Button
+                android:id="@+id/btnSwitchServer"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="🌐 SWITCH SERVER (LOCAL / CLOUD)"
+                android:backgroundTint="@color/input_bg"
+                android:textColor="@color/primary_brand"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="12dp" />
+
+            <Button
                 android:id="@+id/btnCheckUpdate"
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
@@ -421,7 +432,7 @@
                 android:textColor="@color/primary_accent"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="8dp" />
         </LinearLayout>
 
         <!-- Danger Zone: Deactivate Admin & Uninstall -->

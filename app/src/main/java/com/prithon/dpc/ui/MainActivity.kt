@@ -55,11 +55,72 @@ class MainActivity : AppCompatActivity() {
         val tvServerEndpoint = findViewById<TextView>(R.id.tvServerEndpoint)
         val tvAppVersion = findViewById<TextView>(R.id.tvAppVersion)
         val btnCheckUpdate = findViewById<Button>(R.id.btnCheckUpdate)
+        val btnSwitchServer = findViewById<Button>(R.id.btnSwitchServer)
 
         // Display version
         val vName = AppUpdateManager.getCurrentVersionName(this)
         val vCode = AppUpdateManager.getCurrentVersionCode(this)
         tvAppVersion.text = "App Version: v$vName (Build $vCode)"
+
+        // Shared preferences for customer & tenant details
+        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+
+        val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        tvDeviceId.text = "Device ID: $deviceId"
+
+        fun updateServerDisplay() {
+            val server = prefs.getString("server_url", "http://192.168.1.3:4000") ?: "http://192.168.1.3:4000"
+            tvServerEndpoint.text = "Server: $server"
+        }
+        updateServerDisplay()
+
+        fun applyServerUrl(url: String) {
+            val cleanUrl = url.trim().removeSuffix("/")
+            prefs.edit().putString("server_url", cleanUrl).apply()
+            updateServerDisplay()
+            Toast.makeText(this, "Connecting to $cleanUrl...", Toast.LENGTH_SHORT).show()
+            val reconnectIntent = Intent(this, MdmForegroundService::class.java).apply {
+                action = MdmForegroundService.ACTION_RECONNECT_SERVER
+            }
+            startService(reconnectIntent)
+        }
+
+        val extraServer = intent?.getStringExtra("set_server")
+        if (!extraServer.isNullOrEmpty()) {
+            applyServerUrl(extraServer)
+        }
+
+        btnSwitchServer.setOnClickListener {
+            val options = arrayOf(
+                "💻 Localhost / WiFi (http://192.168.1.3:4000)",
+                "☁️ Cloud Server (https://prithon-mdm-backend.onrender.com)",
+                "✏️ Enter Custom URL..."
+            )
+            AlertDialog.Builder(this)
+                .setTitle("Select Control Server")
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> applyServerUrl("http://192.168.1.3:4000")
+                        1 -> applyServerUrl("https://prithon-mdm-backend.onrender.com")
+                        2 -> {
+                            val input = EditText(this).apply {
+                                hint = "http://192.168.1.3:4000"
+                                setText(prefs.getString("server_url", "http://192.168.1.3:4000"))
+                            }
+                            AlertDialog.Builder(this)
+                                .setTitle("Custom Server URL")
+                                .setView(input)
+                                .setPositiveButton("CONNECT") { _, _ ->
+                                    val custom = input.text.toString().trim()
+                                    if (custom.isNotEmpty()) applyServerUrl(custom)
+                                }
+                                .setNegativeButton("CANCEL", null)
+                                .show()
+                        }
+                    }
+                }
+                .show()
+        }
 
         // Permission card elements
         cardPermissions = findViewById(R.id.cardPermissions)
@@ -86,10 +147,6 @@ class MainActivity : AppCompatActivity() {
         val etEmiAmount = findViewById<EditText>(R.id.etEmiAmount)
         val btnSaveCustomer = findViewById<Button>(R.id.btnSaveCustomer)
 
-        val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        tvDeviceId.text = "Device ID: $deviceId"
-        tvServerEndpoint.text = "Server: ${MdmForegroundService.DEFAULT_SERVER_URL}"
-
         // Permission Grant Buttons (Manual Fallbacks)
         btnGrantAdmin.setOnClickListener { promptDeviceAdmin() }
         btnGrantOverlay.setOnClickListener { promptOverlayPermission() }
@@ -114,9 +171,6 @@ class MainActivity : AppCompatActivity() {
         if (locationPerms.any { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }) {
             ActivityCompat.requestPermissions(this, locationPerms, 1001)
         }
-
-        // Shared preferences for customer & tenant details
-        val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
 
         fun loadCustomerUI() {
             val tenantCode = prefs.getString("tenant_code", "") ?: ""
