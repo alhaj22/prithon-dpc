@@ -4,21 +4,21 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@color/bg_dark"
+    android:background="@color/bg_white"
     android:padding="32dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🛡️"
-        android:textSize="64sp"
+    <ImageView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:src="@drawable/ic_launcher"
+        android:contentDescription="Prithon Logo"
         android:layout_marginBottom="24dp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Prithon Enterprise Guard"
-        android:textColor="@color/white"
+        android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -41,7 +41,7 @@
         android:text="FINISH &amp; CONTINUE TO DEVICE"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:backgroundTint="@color/green_success"
+        android:backgroundTint="@color/primary_brand"
         android:textColor="@color/white" />
 
 </LinearLayout>

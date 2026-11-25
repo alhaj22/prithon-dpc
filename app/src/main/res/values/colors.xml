@@ -1,13 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Core White / Light Canvas Palette -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="bg_dark">#0A0F1D</color>
-    <color name="card_dark">#131B2E</color>
-    <color name="red_alert">#EF4444</color>
-    <color name="green_success">#10B981</color>
-    <color name="blue_primary">#3B82F6</color>
-    <color name="cyan_primary">#00E5FF</color>
-    <color name="text_muted">#94A3B8</color>
-    <color name="yellow_pending">#F59E0B</color>
+    <color name="bg_white">#FFFFFFFF</color>
+    <color name="bg_canvas">#FFF8FAFC</color>
+    <color name="card_white">#FFFFFFFF</color>
+    <color name="card_border">#FFE2E8F0</color>
+    <color name="input_bg">#FFF8FAFC</color>
+    <color name="input_border">#FFCBD5E1</color>
+    
+    <!-- High-Contrast Slate / Obsidian Typography -->
+    <color name="text_primary">#FF0F172A</color>
+    <color name="text_secondary">#FF334155</color>
+    <color name="text_muted">#FF64748B</color>
+    <color name="text_placeholder">#FF94A3B8</color>
+    
+    <!-- Executive Brand & Accents -->
+    <color name="primary_brand">#FF0F172A</color>
+    <color name="primary_accent">#FF2563EB</color>
+    <color name="blue_primary">#FF2563EB</color>
+    <color name="green_success">#FF16A34A</color>
+    <color name="green_bg">#FFF0FDF4</color>
+    <color name="red_alert">#FFDC2626</color>
+    <color name="red_bg">#FFFEF2F2</color>
+    <color name="yellow_pending">#FFD97706</color>
+    <color name="yellow_bg">#FFFFFBEB</color>
+    <color name="cyan_primary">#FF0284C7</color>
+
+    <!-- Backward-compatible aliases mapped to clean white theme -->
+    <color name="bg_dark">#FFFFFFFF</color>
+    <color name="card_dark">#FFFFFFFF</color>
 </resources>

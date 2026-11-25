@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
+    android:background="@color/bg_white"
     android:fillViewport="true">
 
     <LinearLayout
@@ -12,32 +12,40 @@
         android:gravity="center_horizontal"
         android:padding="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/device_locked_title"
-            android:textColor="@color/red_alert"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.05" />
+        <!-- Brand Emblem -->
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_launcher"
+            android:contentDescription="Prithon Brand Logo"
+            android:layout_marginTop="20dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/device_locked_title"
+            android:textColor="@color/red_alert"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:text="@string/device_locked_desc"
-            android:textColor="@color/text_muted"
-            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
             android:textAlignment="center"
             android:lineSpacingExtra="3dp" />
 
-        <!-- Mock BharatQR / Payment Container -->
+        <!-- UPI BharatQR Container -->
         <LinearLayout
             android:layout_width="220dp"
             android:layout_height="220dp"
-            android:layout_marginTop="24dp"
-            android:background="@color/white"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_card_white"
             android:orientation="vertical"
             android:gravity="center"
             android:padding="16dp">
@@ -46,7 +54,7 @@
                 android:layout_width="140dp"
                 android:layout_height="140dp"
                 android:src="@android:drawable/ic_menu_camera"
-                android:tint="@color/black"
+                android:tint="@color/text_primary"
                 android:contentDescription="UPI BharatQR Code" />
 
             <TextView
@@ -54,7 +62,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="SCAN VIA GPAY / PHONEPE"
-                android:textColor="@color/black"
+                android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -72,22 +80,22 @@
         <EditText
             android:id="@+id/etUnlockPin"
             android:layout_width="240dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="24dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
             android:hint="@string/unlock_pin_hint"
-            android:textColor="@color/white"
-            android:textColorHint="@color/text_muted"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_placeholder"
             android:inputType="numberPassword"
             android:gravity="center"
-            android:background="@color/card_dark" />
+            android:background="@drawable/bg_input_white" />
 
         <Button
             android:id="@+id/btnUnlock"
             android:layout_width="240dp"
-            android:layout_height="50dp"
+            android:layout_height="48dp"
             android:layout_marginTop="12dp"
             android:text="@string/unlock_btn"
-            android:backgroundTint="@color/blue_primary"
+            android:backgroundTint="@color/primary_brand"
             android:textColor="@color/white"
             android:textStyle="bold" />
 
@@ -95,23 +103,23 @@
         <Button
             android:id="@+id/btnEmergency"
             android:layout_width="240dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="20dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
             android:text="@string/emergency_call_btn"
-            android:backgroundTint="#333333"
-            android:textColor="@color/white"
+            android:backgroundTint="@color/red_bg"
+            android:textColor="@color/red_alert"
             android:textStyle="bold" />
 
         <!-- Customer Helpline -->
         <Button
             android:id="@+id/btnSupport"
             android:layout_width="240dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="10dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp"
             android:text="@string/support_call_btn"
-            android:backgroundTint="@color/card_dark"
-            android:textColor="@color/text_muted" />
+            android:backgroundTint="@color/input_bg"
+            android:textColor="@color/text_secondary" />
 
     </LinearLayout>
 </ScrollView>
