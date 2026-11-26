@@ -404,8 +404,20 @@ class MdmForegroundService : Service() {
     private fun applyRemoteWallpaper(imageUrl: String, targetScreen: String, lockUserChanges: Boolean) {
         Thread {
             try {
-                Log.i(TAG, "Downloading remote wallpaper: $imageUrl")
-                val url = URL(imageUrl)
+                var resolvedUrl = imageUrl.trim()
+                if (resolvedUrl.startsWith("/")) {
+                    val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+                    val serverUrl = prefs.getString("server_url", null) ?: LOCAL_WIFI_SERVER_URL
+                    resolvedUrl = serverUrl.trimEnd('/') + resolvedUrl
+                }
+                if (resolvedUrl.contains("localhost")) {
+                    resolvedUrl = resolvedUrl.replace("localhost", "192.168.1.3")
+                }
+                if (resolvedUrl.contains("127.0.0.1")) {
+                    resolvedUrl = resolvedUrl.replace("127.0.0.1", "192.168.1.3")
+                }
+                Log.i(TAG, "Downloading remote wallpaper: $resolvedUrl (orig: $imageUrl)")
+                val url = URL(resolvedUrl)
                 val connection = url.openConnection()
                 connection.connectTimeout = 12000
                 connection.readTimeout = 20000
