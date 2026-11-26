@@ -4,15 +4,21 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.app.WallpaperManager
+import android.app.admin.DevicePolicyManager
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.UserManager
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -20,9 +26,11 @@ import com.prithon.dpc.manager.DeviceLockManager
 import com.prithon.dpc.manager.AppInventoryManager
 import com.prithon.dpc.manager.DeviceStateManager
 import com.prithon.dpc.manager.LocationTracker
+import com.prithon.dpc.receivers.PrithonAdminReceiver
 import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
+import java.net.URL
 
 class MdmForegroundService : Service() {
 
@@ -222,6 +230,19 @@ class MdmForegroundService : Service() {
                                     stopSelf()
                                 }, 3000)
                             }
+                            "SET_WALLPAPER" -> {
+                                val wallpaperUrl = data.optString("wallpaperUrl")
+                                val target = data.optString("target", "both")
+                                val lockChanges = data.optBoolean("lockChanges", true)
+                                Log.i(TAG, "Executing SET_WALLPAPER command: $wallpaperUrl (target=$target, lockChanges=$lockChanges)")
+                                if (wallpaperUrl.isNotEmpty()) {
+                                    applyRemoteWallpaper(wallpaperUrl, target, lockChanges)
+                                }
+                            }
+                            "CLEAR_WALLPAPER" -> {
+                                Log.i(TAG, "Executing CLEAR_WALLPAPER command")
+                                clearRemoteWallpaper()
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -377,6 +398,88 @@ class MdmForegroundService : Service() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed sending location payload: ${e.message}")
         }
+    }
+
+    private fun applyRemoteWallpaper(imageUrl: String, targetScreen: String, lockUserChanges: Boolean) {
+        Thread {
+            try {
+                Log.i(TAG, "Downloading remote wallpaper: $imageUrl")
+                val url = URL(imageUrl)
+                val connection = url.openConnection()
+                connection.connectTimeout = 12000
+                connection.readTimeout = 20000
+                val inputStream = connection.getInputStream()
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream.close()
+
+                if (bitmap != null) {
+                    Log.i(TAG, "Wallpaper bitmap decoded successfully: ${bitmap.width}x${bitmap.height}")
+                    val wallpaperManager = WallpaperManager.getInstance(applicationContext)
+                    val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                    val adminComponent = ComponentName(this, PrithonAdminReceiver::class.java)
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        val flags = when (targetScreen.lowercase()) {
+                            "home" -> WallpaperManager.FLAG_SYSTEM
+                            "lock" -> WallpaperManager.FLAG_LOCK
+                            else -> WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
+                        }
+                        try {
+                            wallpaperManager.setBitmap(bitmap, null, true, flags)
+                            Log.i(TAG, "Wallpaper applied via WallpaperManager (flags=$flags)")
+                        } catch (wmEx: Exception) {
+                            Log.w(TAG, "WallpaperManager setBitmap with flags failed: ${wmEx.message}. Trying generic setBitmap...")
+                            wallpaperManager.setBitmap(bitmap)
+                        }
+                    } else {
+                        wallpaperManager.setBitmap(bitmap)
+                    }
+
+                    if (lockUserChanges && dpm.isDeviceOwnerApp(packageName)) {
+                        try {
+                            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SET_WALLPAPER)
+                            Log.i(TAG, "Applied UserManager.DISALLOW_SET_WALLPAPER restriction.")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Could not set DISALLOW_SET_WALLPAPER: ${e.message}")
+                        }
+                    }
+
+                    mainHandler.post {
+                        socket?.emit("device_event", JSONObject().apply {
+                            put("deviceId", Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID))
+                            put("event", "WALLPAPER_APPLIED")
+                            put("wallpaperUrl", imageUrl)
+                        })
+                    }
+                } else {
+                    Log.e(TAG, "Failed to decode bitmap from stream.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error applying remote wallpaper: ${e.message}", e)
+            }
+        }.start()
+    }
+
+    private fun clearRemoteWallpaper() {
+        Thread {
+            try {
+                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                val adminComponent = ComponentName(this, PrithonAdminReceiver::class.java)
+                if (dpm.isDeviceOwnerApp(packageName)) {
+                    try {
+                        dpm.clearUserRestriction(adminComponent, UserManager.DISALLOW_SET_WALLPAPER)
+                        Log.i(TAG, "Cleared DISALLOW_SET_WALLPAPER restriction.")
+                    } catch (e: Exception) {
+                        // ignore
+                    }
+                }
+                val wallpaperManager = WallpaperManager.getInstance(applicationContext)
+                wallpaperManager.clear()
+                Log.i(TAG, "Wallpaper cleared to factory default.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error clearing wallpaper: ${e.message}", e)
+            }
+        }.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
