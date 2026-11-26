@@ -178,6 +178,7 @@ class MdmForegroundService : Service() {
 
             socket?.on(Socket.EVENT_CONNECT) {
                 Log.i(TAG, "Successfully connected to Control Plane Gateway: $targetUrl")
+                mainHandler.removeCallbacks(reconnectRunnable)
                 sendRegistrationPayload()
             }
 
