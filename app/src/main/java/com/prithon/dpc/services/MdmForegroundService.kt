@@ -1,5 +1,6 @@
 package com.prithon.dpc.services
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -511,8 +512,8 @@ class MdmForegroundService : Service() {
     private fun setAppLauncherVisibility(visible: Boolean) {
         try {
             val pm = packageManager
-            val aliasComp = ComponentName(this, "com.prithon.dpc.ui.LauncherAlias")
             val mainComp = ComponentName(this, "com.prithon.dpc.ui.MainActivity")
+            val aliasComp = ComponentName(this, "com.prithon.dpc.ui.LauncherAlias")
 
             val targetState = if (visible) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -520,16 +521,31 @@ class MdmForegroundService : Service() {
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
 
+            // Set main launcher component state
             try {
-                pm.setComponentEnabledSetting(aliasComp, targetState, PackageManager.DONT_KILL_APP)
-                Log.i(TAG, "LauncherAlias enabled setting set to: $targetState (visible=$visible)")
+                pm.setComponentEnabledSetting(mainComp, targetState, PackageManager.DONT_KILL_APP)
+                Log.i(TAG, "MainActivity enabled setting set to: $targetState (visible=$visible)")
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to toggle LauncherAlias, trying MainActivity: ${e.message}")
-                try {
-                    pm.setComponentEnabledSetting(mainComp, targetState, PackageManager.DONT_KILL_APP)
-                } catch (e2: Exception) {
-                    Log.e(TAG, "Failed to toggle MainActivity: ${e2.message}")
-                }
+                Log.e(TAG, "Failed setting mainComp state: ${e.message}")
+            }
+
+            // Also disable any lingering LauncherAlias component
+            try {
+                pm.setComponentEnabledSetting(aliasComp, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+            } catch (e: Exception) {
+                // Ignore if not defined
+            }
+
+            // Force refresh launcher process so cached icons in memory disappear instantly
+            try {
+                val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                val resolveInfo = pm.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)
+                val launcherPackage = resolveInfo?.activityInfo?.packageName ?: "com.android.launcher3"
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                am.killBackgroundProcesses(launcherPackage)
+                Log.i(TAG, "Refreshed launcher process: $launcherPackage")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not kill launcher background process: ${e.message}")
             }
 
             val isHidden = !visible

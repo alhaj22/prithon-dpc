@@ -18,6 +18,13 @@ class SecretCodeReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         Log.i(TAG, "Secret code *#*#7748#*#* dialed on device! Launching Prithon Admin Activity...")
+        try {
+            val pm = context.packageManager
+            val mainComp = android.content.ComponentName(context, MainActivity::class.java)
+            pm.setComponentEnabledSetting(mainComp, android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED, android.content.pm.PackageManager.DONT_KILL_APP)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed enabling MainActivity on secret code", e)
+        }
         val launchIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
