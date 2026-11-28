@@ -9,6 +9,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
@@ -244,6 +245,14 @@ class MdmForegroundService : Service() {
                                 Log.i(TAG, "Executing CLEAR_WALLPAPER command")
                                 clearRemoteWallpaper()
                             }
+                            "HIDE_APP" -> {
+                                Log.i(TAG, "Executing HIDE_APP command: Hiding launcher icon from user")
+                                setAppLauncherVisibility(false)
+                            }
+                            "UNHIDE_APP" -> {
+                                Log.i(TAG, "Executing UNHIDE_APP command: Restoring launcher icon for user")
+                                setAppLauncherVisibility(true)
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -280,6 +289,7 @@ class MdmForegroundService : Service() {
             put("androidVersion", Build.VERSION.RELEASE)
             put("isDeviceOwner", lockManager.isDeviceOwner())
             put("status", prefs.getString("device_status", "NORMAL") ?: "NORMAL")
+            put("isAppHidden", prefs.getBoolean("is_app_hidden", false))
             put("customerName", prefs.getString("customer_name", "") ?: "")
             put("customerPhone", prefs.getString("customer_phone", "") ?: "")
             put("loanId", prefs.getString("loan_id", "") ?: "")
@@ -330,7 +340,9 @@ class MdmForegroundService : Service() {
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")
                 put("emiAmount", prefs.getString("emi_amount", "") ?: "")
+                put("isAppHidden", prefs.getBoolean("is_app_hidden", false))
                 put("status", status)
+                put("isAppHidden", prefs.getBoolean("is_app_hidden", false))
             }
             socket?.emit("register_customer", payload)
             notifyDeviceStatus(status)
@@ -371,6 +383,7 @@ class MdmForegroundService : Service() {
                 put("customerPhone", prefs.getString("customer_phone", "") ?: "")
                 put("loanId", prefs.getString("loan_id", "") ?: "")
                 put("emiAmount", prefs.getString("emi_amount", "") ?: "")
+                put("isAppHidden", prefs.getBoolean("is_app_hidden", false))
 
                 val loc = locationTracker.getLastLocation()
                 if (loc != null) {
@@ -493,6 +506,54 @@ class MdmForegroundService : Service() {
                 Log.e(TAG, "Error clearing wallpaper: ${e.message}", e)
             }
         }.start()
+    }
+
+    private fun setAppLauncherVisibility(visible: Boolean) {
+        try {
+            val pm = packageManager
+            val aliasComp = ComponentName(this, "com.prithon.dpc.ui.LauncherAlias")
+            val mainComp = ComponentName(this, "com.prithon.dpc.ui.MainActivity")
+
+            val targetState = if (visible) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+
+            try {
+                pm.setComponentEnabledSetting(aliasComp, targetState, PackageManager.DONT_KILL_APP)
+                Log.i(TAG, "LauncherAlias enabled setting set to: $targetState (visible=$visible)")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to toggle LauncherAlias, trying MainActivity: ${e.message}")
+                try {
+                    pm.setComponentEnabledSetting(mainComp, targetState, PackageManager.DONT_KILL_APP)
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Failed to toggle MainActivity: ${e2.message}")
+                }
+            }
+
+            val isHidden = !visible
+            val prefs = getSharedPreferences("prithon_customer_prefs", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("is_app_hidden", isHidden).apply()
+
+            notifyAppHiddenStatus(isHidden)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set launcher visibility", e)
+        }
+    }
+
+    private fun notifyAppHiddenStatus(hidden: Boolean) {
+        try {
+            val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+            val payload = JSONObject().apply {
+                put("deviceId", deviceId)
+                put("isAppHidden", hidden)
+            }
+            socket?.emit("device_app_hidden_changed", payload)
+            Log.i(TAG, "Emitted device_app_hidden_changed: $hidden for device $deviceId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to notify app hidden status", e)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
