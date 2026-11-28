@@ -10,3 +10,13 @@
 local.properties
 app/build/
 *.hprof
+
+# Release signing keystores and credentials (never commit)
+*.jks
+*.keystore
+keystore/
+keystore.properties
+keystore-details.txt
+/*.txt
+/*.log
+.gradle
